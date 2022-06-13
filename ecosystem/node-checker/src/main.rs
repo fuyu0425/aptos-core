@@ -9,7 +9,9 @@ mod runner;
 use anyhow::Result;
 use clap::Parser;
 use log::{debug, info};
+use metric_collector::{MetricCollector, NamedNodeUrl, ReqwestMetricCollector};
 use poem::{handler, listener::TcpListener, Route, Server};
+
 use poem_openapi::{payload::PlainText, OpenApi, OpenApiService};
 use url::Url;
 use std::path::PathBuf;
