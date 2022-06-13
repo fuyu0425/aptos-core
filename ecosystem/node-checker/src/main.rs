@@ -8,7 +8,15 @@ use clap::Parser;
 use log::{debug, info};
 use poem::{handler, listener::TcpListener, Route, Server};
 use poem_openapi::{payload::PlainText, OpenApi, OpenApiService};
+<<<<<<< HEAD
 use url::Url;
+=======
+<<<<<<< HEAD
+use std::path::PathBuf;
+=======
+use reqwest::Url;
+>>>>>>> 583bd19f5 (Add support for specifying a default node to test)
+>>>>>>> 958028fa9 (Add support for specifying a default node to test)
 
 // TODO: Replace this with the real frontend, or perhaps an error handler if we
 // decide to route the frontend to just a static hoster such as nginx.
@@ -19,6 +27,11 @@ fn root() -> String {
 
 struct Api;
 
+// TODO: Should we host an endpoint that says what node types
+// the user can work with? Derived from the keys of baseline_node_addresses.
+//
+// TODO: There should be an endpoint that doesn't take in a target, but
+// it returns an error if the user hasn't specified a default target.
 #[OpenApi]
 impl Api {
     /// Hello world
@@ -51,6 +64,17 @@ struct Args {
     /// The (metric) evaluators to use.
     #[clap(long)]
     evaluators: Vec<String>,
+
+    /// If this is given, the user will be able to call the todo endpoint,
+    /// which takes no target, instead using this as the target. If
+    /// allow_test_node_only is set, only the todo endpoint will work,
+    /// the node will not respond to health check requests for other nodes.
+    #[clap(long)]
+    test_node_url: Option<Url>,
+
+    /// See the help message of test_node_address,
+    #[clap(long)]
+    allow_test_node_only: bool,
 }
 
 #[tokio::main]
