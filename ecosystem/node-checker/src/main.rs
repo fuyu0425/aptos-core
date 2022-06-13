@@ -1,3 +1,5 @@
+mod metric_collector;
+
 use anyhow::Result;
 use clap::Parser;
 use log::{debug, info};
@@ -29,14 +31,14 @@ struct Args {
     /// standard env logger configuration via env vars
     #[clap(short, long)]
     debug: bool,
-    
+
     /// What address to listen on.
     #[clap(long, default_value = "0.0.0.0")]
     listen_address: String,
-    
+
     /// What port to listen on.
-    #[clap(short, long, default_value = "20121")]
-    port: u16,
+    #[clap(long, default_value = "20121")]
+    listen_port: u16,
 }
 
 #[tokio::main]
@@ -51,7 +53,7 @@ async fn main() -> Result<()> {
         info!("Logging at info level");
     }
 
-    let version = std::env::var("CARGO_PKG_VERSION").unwrap_or_else(|_| "1.0.0".to_string());
+    let version = std::env::var("CARGO_PKG_VERSION").unwrap_or_else(|_| "0.1.0".to_string());
 
     let api = Api;
     let api_service =
@@ -60,8 +62,7 @@ async fn main() -> Result<()> {
     let spec_json = api_service.spec_endpoint();
     let spec_yaml = api_service.spec_endpoint_yaml();
 
-
-    Server::new(TcpListener::bind((args.listen_address, args.port)))
+    Server::new(TcpListener::bind((args.listen_address, args.listen_port)))
         .run(
             Route::new()
                 .nest("/", root)

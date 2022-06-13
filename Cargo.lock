@@ -748,8 +748,7 @@ dependencies = [
  "poem",
  "poem-openapi",
  "reqwest",
- "reqwest-middleware",
- "reqwest-retry",
+ "thiserror",
  "tokio",
  "url",
 ]

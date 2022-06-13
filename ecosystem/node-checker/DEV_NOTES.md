@@ -14,4 +14,7 @@ checking the metrics until the client stops calling. how will this work with the
 being multiple servers. how does this work in the local check mode?
 
 ideally we can send back the first set of metrics instantly? or is that worth the dev
-overhaead to design a UI that handles that? could we leverage long polling for this?
+overhead to design a UI that handles that? could we leverage long polling for this?
+
+Would we prefer to collect args for the server from the environment? Not as obvious
+to the user but perhaps better for our setup.
