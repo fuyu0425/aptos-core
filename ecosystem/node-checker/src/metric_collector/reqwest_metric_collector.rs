@@ -3,6 +3,7 @@ use std::net::{IpAddr, Ipv4Addr};
 use super::traits::{MetricCollector, MetricCollectorError};
 use anyhow::{anyhow, Context, Result};
 use async_trait::async_trait;
+use log::debug;
 use reqwest::Client as ReqwestClient;
 use reqwest::Url;
 use url::Host;
@@ -50,6 +51,7 @@ impl ReqwestMetricCollector {
 #[async_trait]
 impl MetricCollector for ReqwestMetricCollector {
     async fn collect_metrics(&self) -> Result<Vec<String>, MetricCollectorError> {
+        debug!("Connecting to {} to collect metrics", self.node_url);
         let response = self
             .client
             .get(self.node_url.clone())
@@ -62,6 +64,6 @@ impl MetricCollector for ReqwestMetricCollector {
             .await
             .with_context(|| format!("Failed to process response body from {}", self.node_url))
             .map_err(|e| MetricCollectorError::ResponseParseError(anyhow!(e)))?;
-        Ok(body.lines().map(|line| line.to_string()).collect())
+        Ok(body.lines().map(|line| line.to_owned()).collect())
     }
 }

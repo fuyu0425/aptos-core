@@ -11,6 +11,9 @@ pub enum RunnerError {
     /// We failed to collect metrics for some reason.
     MetricCollectorError(MetricCollectorError),
 
+    /// We couldn't parse the metrics.
+    ParseMetricsError(Error),
+
     UnknownError(Error),
 }
 
