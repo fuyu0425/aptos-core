@@ -4,6 +4,7 @@
 #![allow(unused_variables)]
 
 mod metric_collector;
+mod metric_evaluator;
 mod runner;
 
 use anyhow::Result;
