@@ -9,15 +9,13 @@ use std::time::Duration;
 #[derive(Clone, Debug)]
 pub struct BlockingRunner<M: MetricCollector> {
     baseline_retriever: M,
-    target_retriever: M,
     metrics_fetch_delay: Duration,
 }
 
 impl<M: MetricCollector> BlockingRunner<M> {
-    pub fn new(baseline_retriever: M, target_retriever: M, metrics_fetch_delay: Duration) -> Self {
+    pub fn new(baseline_retriever: M, metrics_fetch_delay: Duration) -> Self {
         Self {
             baseline_retriever,
-            target_retriever,
             metrics_fetch_delay,
         }
     }
@@ -32,7 +30,7 @@ impl<M: MetricCollector> BlockingRunner<M> {
 #[async_trait]
 
 impl<M: MetricCollector> Runner for BlockingRunner<M> {
-    async fn run(&self) -> Result<(), RunnerError> {
+    async fn run<T: MetricCollector>(&self, target_retriever: T) -> Result<(), RunnerError> {
         debug!("Collecting first round of baseline metrics");
         let first_baseline_metrics = self
             .baseline_retriever
