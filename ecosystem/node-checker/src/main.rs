@@ -1,3 +1,6 @@
+// For use while we're developing.
+#![allow(dead_code)]
+
 mod metric_collector;
 
 use anyhow::Result;

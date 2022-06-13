@@ -1,10 +1,25 @@
+use anyhow::{Error, Result};
 use async_trait::async_trait;
-use thiserror::Error;
+use std::fmt::{Display, Formatter, Result as FmtResult};
 
 // TODO: Consider using thiserror.
 
-#[derive(Debug, Error)]
-pub enum MetricCollectorError {}
+#[derive(Debug)]
+pub enum MetricCollectorError {
+    /// We were unable to get data from the node.
+    GetDataError(Error),
+
+    /// We could perform basic parsing on the response.
+    ResponseParseError(Error),
+}
+
+impl Display for MetricCollectorError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl std::error::Error for MetricCollectorError {}
 
 /// todo describe the trait
 /// todo assert these trait constraints are necessary
