@@ -7,6 +7,15 @@ use std::fmt::{Display, Formatter, Result as FmtResult};
 
 #[derive(Debug)]
 pub enum MetricsEvaluatorError {
+    /// The metric we're evaluating is missing from the baseline. Args:
+    ///   - The metric name.
+    ///   - Explanation.
+    /// When the target node is missing a metric, we return an Evaluation
+    /// indiating that something is wrong with the target node, but if the
+    /// baseline node is missing a metric, it implies that something is wrong
+    /// without our node checker configuration, so we return an error here.
+    MissingBaselineMetric(String, String),
+
     UnknownError(Error),
 }
 
@@ -19,9 +28,10 @@ impl Display for MetricsEvaluatorError {
 impl std::error::Error for MetricsEvaluatorError {}
 
 // TODO: Should I find a way to have typed actual + expected fields?
+#[derive(Clone, Debug)]
 pub struct Evaluation {
-    /// Title of the evaluation, e.g. "State Sync".
-    pub title: String,
+    /// Headline of the evaluation, e.g. "Healthy!" or "Metrics missing!".
+    pub headline: String,
 
     /// Score out of 100.
     pub score: u8,
