@@ -18,3 +18,8 @@ overhead to design a UI that handles that? could we leverage long polling for th
 
 Would we prefer to collect args for the server from the environment? Not as obvious
 to the user but perhaps better for our setup.
+
+write up an acknowledgment that using a shared error type for each trait is some
+somewhat nasty coupling, but the alternative is probably overly complex.
+
+get info about this project to Jing. she can help me with user journey stuff.

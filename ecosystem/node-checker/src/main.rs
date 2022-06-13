@@ -1,22 +1,20 @@
 // For use while we're developing.
 #![allow(dead_code)]
+#![allow(unused_imports)]
+#![allow(unused_variables)]
 
 mod metric_collector;
+mod runner;
 
 use anyhow::Result;
 use clap::Parser;
 use log::{debug, info};
 use poem::{handler, listener::TcpListener, Route, Server};
 use poem_openapi::{payload::PlainText, OpenApi, OpenApiService};
-<<<<<<< HEAD
 use url::Url;
-=======
-<<<<<<< HEAD
 use std::path::PathBuf;
-=======
 use reqwest::Url;
->>>>>>> 583bd19f5 (Add support for specifying a default node to test)
->>>>>>> 958028fa9 (Add support for specifying a default node to test)
+use runner::BlockingRunner;
 
 // TODO: Replace this with the real frontend, or perhaps an error handler if we
 // decide to route the frontend to just a static hoster such as nginx.
@@ -35,8 +33,8 @@ struct Api;
 #[OpenApi]
 impl Api {
     /// Hello world
-    #[oai(path = "/", method = "get")]
-    async fn index(&self) -> PlainText<&'static str> {
+    #[oai(path = "/check_node", method = "get")]
+    async fn run_check(&self) -> PlainText<&'static str> {
         PlainText("Hello World")
     }
 }
