@@ -2,7 +2,7 @@ use anyhow::{Error, Result};
 use async_trait::async_trait;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 
-use crate::metric_collector::{MetricCollector, MetricCollectorError};
+use crate::{metric_collector::{MetricCollector, MetricCollectorError}, public_types::CompleteEvaluation, metric_evaluator::MetricsEvaluatorError};
 
 // TODO: Consider using thiserror.
 
@@ -13,6 +13,10 @@ pub enum RunnerError {
 
     /// We couldn't parse the metrics.
     ParseMetricsError(Error),
+
+    /// One of the evaluators failed. This is not the same as a poor score from
+    /// an evaluator, this is an actual failure in the evaluation process.
+    MetricEvaluatorError(MetricsEvaluatorError),
 
     UnknownError(Error),
 }
@@ -40,17 +44,15 @@ struct RunnerResult {}
 
 /// todo describe the trait
 /// todo assert these trait constraints are necessary
+/// todo consider whether we need Clone if we need to spawn multiple handlers ourselves.
 ///
 /// Note:
-///  - Clone is required because multiple calls to spawn need to be static but also share
-///      the same todo instance (mostly for the in-memory versions).
-///
 ///  - Sync + Send is required because this will be a member of the todo which needs
 ///      to be used across async boundaries
 ///
 ///  - 'static is required because this will be stored on the todo which needs to be 'static
 #[async_trait]
-pub trait Runner: Clone + Sync + Send + 'static {
+pub trait Runner: Sync + Send + 'static {
     // TODO: add proper result type.
-    async fn run<M: MetricCollector>(&self, target_retriever: M) -> Result<(), RunnerError>;
+    async fn run<M: MetricCollector>(&self, target_retriever: M) -> Result<CompleteEvaluation, RunnerError>;
 }

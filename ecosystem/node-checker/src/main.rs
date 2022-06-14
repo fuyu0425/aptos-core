@@ -8,20 +8,23 @@ mod metric_evaluator;
 mod public_types;
 mod runner;
 
-use anyhow::{anyhow, bail, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
 use lazy_static::lazy_static;
 use log::{debug, info};
 use metric_collector::{MetricCollector, ReqwestMetricCollector};
+use metric_evaluator::MetricsEvaluator;
 use poem::http::StatusCode;
 use poem::{
     handler, listener::TcpListener, Error as PoemError, Result as PoemResult, Route, Server,
 };
-use poem_openapi::{payload::PlainText, OpenApi, OpenApiService};
+use poem_openapi::{payload::Json, OpenApi, OpenApiService};
 use public_types::CompleteEvaluation;
 use reqwest::Client as ReqwestClient;
-use runner::BlockingRunner;
+use runner::{BlockingRunner, BlockingRunnerArgs, Runner};
+use std::hash::Hash;
 use std::path::PathBuf;
+use std::collections::HashSet;
 use url::Url;
 
 const DEFAULT_METRICS_PORT: u16 = 9091;
@@ -41,8 +44,8 @@ fn root() -> String {
     "Hello World!".to_string()
 }
 
-struct Api<M: MetricCollector> {
-    pub baseline_metric_collector: M,
+struct Api<M: MetricCollector, R: Runner> {
+    pub runner: R,
     pub target_metric_collector: Option<M>,
     pub allow_preconfigured_test_node_only: bool,
 }
@@ -50,9 +53,9 @@ struct Api<M: MetricCollector> {
 // I choose to keep both methods rather than making these two separate APIs because it'll
 // make for more descriptive error messages.
 #[OpenApi]
-impl<M: MetricCollector> Api<M> {
+impl<M: MetricCollector, R: Runner> Api<M, R> {
     #[oai(path = "/check_node", method = "get")]
-    async fn check_node(&self) -> PoemResult<CompleteEvaluation> {
+    async fn check_node(&self) -> PoemResult<Json<CompleteEvaluation>> {
         if self.allow_preconfigured_test_node_only {
             return Err(PoemError::from((
                 StatusCode::METHOD_NOT_ALLOWED,
@@ -64,7 +67,7 @@ impl<M: MetricCollector> Api<M> {
     }
 
     #[oai(path = "/check_preconfigured_node", method = "get")]
-    async fn check_preconfigured_node(&self) -> PoemResult<CompleteEvaluation> {
+    async fn check_preconfigured_node(&self) -> PoemResult<Json<CompleteEvaluation>> {
         if self.target_metric_collector.is_none() {
             return Err(PoemError::from((
                 StatusCode::METHOD_NOT_ALLOWED,
@@ -73,7 +76,9 @@ impl<M: MetricCollector> Api<M> {
                 ),
             )));
         }
-        Ok(PlainText("Hello World"))
+
+        let e = CompleteEvaluation::from(vec![]);
+        Ok(Json(e))
     }
 }
 
@@ -137,6 +142,18 @@ struct Args {
     /// See the help message of target_node_url.
     #[clap(long)]
     allow_preconfigured_test_node_only: bool,
+
+    #[clap(flatten)]
+    blocking_runner_args: BlockingRunnerArgs,
+}
+
+fn build_evaluators(args: &Args) -> Result<Vec<Box< dyn MetricsEvaluator>>> {
+    let evaluator_strings: HashSet<String> = args.evaluators.iter().cloned().collect();
+    if evaluator_strings.is_empty() {
+        bail!("No evaluators specified");
+    }
+    let mut evaluators = vec![];
+    Ok(evaluators)
 }
 
 #[tokio::main]
@@ -157,12 +174,16 @@ async fn main() -> Result<()> {
         ReqwestMetricCollector::new(args.baseline_node_url.clone(), args.baseline_metrics_port);
 
     let target_metric_collector = match args.target_node_url {
-        Some(url) => Some(ReqwestMetricCollector::new(url, args.target_metrics_port)),
+        Some(ref url) => Some(ReqwestMetricCollector::new(url.clone(), args.target_metrics_port)),
         None => None,
     };
 
+    let evaluators = build_evaluators(&args).context("Failed to build evaluators")?;
+
+    let runner = BlockingRunner::new(args.blocking_runner_args, baseline_metric_collector, evaluators);
+
     let api = Api {
-        baseline_metric_collector,
+        runner,
         target_metric_collector,
         allow_preconfigured_test_node_only: args.allow_preconfigured_test_node_only,
     };

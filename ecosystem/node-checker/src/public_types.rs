@@ -1,5 +1,7 @@
+use poem_openapi::Object as PoemObject;
+
 // TODO: Should I find a way to have typed actual + expected fields?
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PoemObject)]
 pub struct Evaluation {
     /// Headline of the evaluation, e.g. "Healthy!" or "Metrics missing!".
     pub headline: String,
@@ -11,7 +13,7 @@ pub struct Evaluation {
     pub explanation: String,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PoemObject)]
 pub struct CompleteEvaluation {
     /// All the evaluations we ran.
     pub evaluations: Vec<Evaluation>,
