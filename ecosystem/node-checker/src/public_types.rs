@@ -1,3 +1,6 @@
+// Copyright (c) Aptos
+// SPDX-License-Identifier: Apache-2.0
+
 use crate::args::{DEFAULT_API_PORT, DEFAULT_METRICS_PORT, DEFAULT_NOISE_PORT};
 use poem_openapi::types::Example;
 use poem_openapi::Object as PoemObject;

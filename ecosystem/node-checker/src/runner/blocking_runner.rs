@@ -1,3 +1,6 @@
+// Copyright (c) Aptos
+// SPDX-License-Identifier: Apache-2.0
+
 use super::{Runner, RunnerError};
 use crate::{
     metric_collector::MetricCollector, metric_evaluator::MetricsEvaluator,

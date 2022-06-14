@@ -1,3 +1,6 @@
+// Copyright (c) Aptos
+// SPDX-License-Identifier: Apache-2.0
+
 use super::common::get_metric_value;
 use super::{MetricsEvaluator, MetricsEvaluatorError};
 use crate::public_types::Evaluation;

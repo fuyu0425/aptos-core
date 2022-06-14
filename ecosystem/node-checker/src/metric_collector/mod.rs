@@ -1,3 +1,6 @@
+// Copyright (c) Aptos
+// SPDX-License-Identifier: Apache-2.0
+
 mod common;
 mod reqwest_metric_collector;
 mod traits;

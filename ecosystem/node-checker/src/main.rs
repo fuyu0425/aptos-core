@@ -1,3 +1,6 @@
+// Copyright (c) Aptos
+// SPDX-License-Identifier: Apache-2.0
+
 // For use while we're developing.
 #![allow(dead_code)]
 #![allow(unused_imports)]

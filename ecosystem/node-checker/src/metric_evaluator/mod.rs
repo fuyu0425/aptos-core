@@ -1,3 +1,6 @@
+// Copyright (c) Aptos
+// SPDX-License-Identifier: Apache-2.0
+
 mod common;
 mod state_sync_evaluator;
 mod traits;
