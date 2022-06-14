@@ -31,7 +31,7 @@ impl StateSyncMetricsEvaluator {
     }
 
     fn get_sync_version(&self, metrics: &PrometheusScrape) -> Option<u64> {
-        get_metric_value(&metrics, STATE_SYNC_METRIC, "type", "synced")
+        get_metric_value(metrics, STATE_SYNC_METRIC, "type", "synced")
     }
 }
 
@@ -74,13 +74,15 @@ impl MetricsEvaluator for StateSyncMetricsEvaluator {
         }
 
         // Get the latest state sync version from the baseline node.
-        let latest_baseline_version = self
-            .get_sync_version(latest_baseline_metrics)
-            .ok_or(MetricsEvaluatorError::MissingBaselineMetric(
-            STATE_SYNC_METRIC.to_string(),
-            "The latest set of metrics from the baseline node did not contain the necessary key"
-                .to_string(),
-        ))?;
+        let latest_baseline_version =
+            self.get_sync_version(latest_baseline_metrics)
+                .ok_or_else(|| {
+                    MetricsEvaluatorError::MissingBaselineMetric(
+                        STATE_SYNC_METRIC.to_string(),
+                        "The latest set of metrics from the baseline node did not contain the necessary key"
+                            .to_string(),
+                    )
+                })?;
 
         match (previous_target_version, latest_target_version) {
             (Some(previous), Some(latest)) => {

@@ -41,9 +41,9 @@ impl<M: MetricCollector> BlockingRunner<M> {
     }
 
     fn parse_response(&self, lines: Vec<String>) -> Result<PrometheusScrape, RunnerError> {
-        PrometheusScrape::parse(lines.into_iter().map(|s| Ok(s)))
+        PrometheusScrape::parse(lines.into_iter().map(Ok))
             .context("Failed to parse metrics response")
-            .map_err(|e| RunnerError::ParseMetricsError(e))
+            .map_err(RunnerError::ParseMetricsError)
     }
 }
 
@@ -63,13 +63,13 @@ impl<M: MetricCollector> Runner for BlockingRunner<M> {
             .baseline_metric_collector
             .collect_metrics()
             .await
-            .map_err(|e| RunnerError::MetricCollectorError(e))?;
+            .map_err(RunnerError::MetricCollectorError)?;
 
         debug!("Collecting first round of target metrics");
         let first_target_metrics = target_retriever
             .collect_metrics()
             .await
-            .map_err(|e| RunnerError::MetricCollectorError(e))?;
+            .map_err(RunnerError::MetricCollectorError)?;
 
         let first_baseline_metrics = self.parse_response(first_baseline_metrics)?;
         let first_target_metrics = self.parse_response(first_target_metrics)?;
@@ -81,13 +81,13 @@ impl<M: MetricCollector> Runner for BlockingRunner<M> {
             .baseline_metric_collector
             .collect_metrics()
             .await
-            .map_err(|e| RunnerError::MetricCollectorError(e))?;
+            .map_err(RunnerError::MetricCollectorError)?;
 
         debug!("Collecting second round of target metrics");
         let second_target_metrics = target_retriever
             .collect_metrics()
             .await
-            .map_err(|e| RunnerError::MetricCollectorError(e))?;
+            .map_err(RunnerError::MetricCollectorError)?;
 
         let second_baseline_metrics = self.parse_response(second_baseline_metrics)?;
         let second_target_metrics = self.parse_response(second_target_metrics)?;
@@ -102,7 +102,7 @@ impl<M: MetricCollector> Runner for BlockingRunner<M> {
                     &second_baseline_metrics,
                     &second_target_metrics,
                 )
-                .map_err(|e| RunnerError::MetricEvaluatorError(e))?;
+                .map_err(RunnerError::MetricEvaluatorError)?;
             evaluations.append(&mut es);
         }
 
