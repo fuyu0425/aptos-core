@@ -1,9 +1,9 @@
 // Copyright (c) Aptos
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::args::Args;
-use crate::metric_evaluator::{
-    MetricsEvaluator, StateSyncMetricsEvaluator, STATE_SYNC_EVALUATOR_NAME,
+use crate::{
+    args::Args,
+    metric_evaluator::{MetricsEvaluator, StateSyncMetricsEvaluator, STATE_SYNC_EVALUATOR_NAME},
 };
 use anyhow::{bail, Result};
 use log::{info, warn};

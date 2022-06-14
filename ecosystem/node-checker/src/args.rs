@@ -1,8 +1,7 @@
 // Copyright (c) Aptos
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::metric_evaluator::StateSyncMetricsEvaluatorArgs;
-use crate::runner::BlockingRunnerArgs;
+use crate::{metric_evaluator::StateSyncMetricsEvaluatorArgs, runner::BlockingRunnerArgs};
 use clap::Parser;
 use once_cell::sync::Lazy;
 use url::Url;

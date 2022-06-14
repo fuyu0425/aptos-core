@@ -20,18 +20,15 @@ use clap::Parser;
 use log::{debug, info};
 use metric_collector::{MetricCollector, ReqwestMetricCollector};
 use metric_evaluator::MetricsEvaluator;
-use poem::http::StatusCode;
 use poem::{
-    handler, listener::TcpListener, Error as PoemError, Result as PoemResult, Route, Server,
+    handler, http::StatusCode, listener::TcpListener, Error as PoemError, Result as PoemResult,
+    Route, Server,
 };
 use poem_openapi::{payload::Json, OpenApi, OpenApiService};
 use public_types::{CompleteEvaluation, NodeUrl};
 use reqwest::Client as ReqwestClient;
 use runner::{BlockingRunner, BlockingRunnerArgs, Runner};
-use std::collections::HashSet;
-use std::hash::Hash;
-use std::path::PathBuf;
-use std::sync::Arc;
+use std::{collections::HashSet, hash::Hash, path::PathBuf, sync::Arc};
 use url::Url;
 
 // TODO: Replace this with the real frontend, or perhaps an error handler if we
