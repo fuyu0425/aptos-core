@@ -28,8 +28,10 @@ pub struct CompleteEvaluation {
 impl From<Vec<Evaluation>> for CompleteEvaluation {
     // Very basic for now, we likely want a trait for this.
     fn from(evaluations: Vec<Evaluation>) -> Self {
-        let summary_score =
-            evaluations.iter().map(|e| e.score).sum::<u8>() / evaluations.len() as u8;
+        let summary_score = match evaluations.len() {
+            0 => 0,
+            _ => evaluations.iter().map(|e| e.score).sum::<u8>() / evaluations.len() as u8,
+        };
         let summary_explanation = match summary_score {
             summary_score if summary_score > 95 => format!("{}: Awesome!", summary_score),
             summary_score if summary_score > 80 => format!("{}: Good!", summary_score),
