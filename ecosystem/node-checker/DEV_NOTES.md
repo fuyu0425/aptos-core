@@ -37,3 +37,5 @@ do we use this tool for registration? max thinks yes. we need to verify that the
 end of week sounds fast.
 
 openapi tomorrow.
+
+poem does indeed support server side events: https://github.com/poem-web/poem/blob/master/examples/openapi/sse/src/main.rs
