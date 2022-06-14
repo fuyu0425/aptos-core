@@ -1,3 +1,4 @@
+use crate::public_types::Evaluation;
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use prometheus_parse::Scrape as PrometheusScrape;
@@ -26,19 +27,6 @@ impl Display for MetricsEvaluatorError {
 }
 
 impl std::error::Error for MetricsEvaluatorError {}
-
-// TODO: Should I find a way to have typed actual + expected fields?
-#[derive(Clone, Debug)]
-pub struct Evaluation {
-    /// Headline of the evaluation, e.g. "Healthy!" or "Metrics missing!".
-    pub headline: String,
-
-    /// Score out of 100.
-    pub score: u8,
-
-    /// Explanation of the evaluation.
-    pub explanation: String,
-}
 
 /// todo describe the trait
 /// todo assert these trait constraints are necessary

@@ -1,5 +1,6 @@
 use super::common::get_metric_value;
-use super::{Evaluation, MetricsEvaluator, MetricsEvaluatorError};
+use super::{MetricsEvaluator, MetricsEvaluatorError};
+use crate::public_types::Evaluation;
 use anyhow::Result;
 use log::debug;
 use prometheus_parse::Scrape as PrometheusScrape;

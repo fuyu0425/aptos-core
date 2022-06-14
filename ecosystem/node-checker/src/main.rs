@@ -5,6 +5,7 @@
 
 mod metric_collector;
 mod metric_evaluator;
+mod public_types;
 mod runner;
 
 use anyhow::{anyhow, bail, Result};
@@ -17,6 +18,7 @@ use poem::{
     handler, listener::TcpListener, Error as PoemError, Result as PoemResult, Route, Server,
 };
 use poem_openapi::{payload::PlainText, OpenApi, OpenApiService};
+use public_types::CompleteEvaluation;
 use reqwest::Client as ReqwestClient;
 use runner::BlockingRunner;
 use std::path::PathBuf;
@@ -45,11 +47,12 @@ struct Api<M: MetricCollector> {
     pub allow_preconfigured_test_node_only: bool,
 }
 
+// I choose to keep both methods rather than making these two separate APIs because it'll
+// make for more descriptive error messages.
 #[OpenApi]
 impl<M: MetricCollector> Api<M> {
-    /// Hello world
     #[oai(path = "/check_node", method = "get")]
-    async fn check_node(&self) -> PoemResult<PlainText<&'static str>> {
+    async fn check_node(&self) -> PoemResult<CompleteEvaluation> {
         if self.allow_preconfigured_test_node_only {
             return Err(PoemError::from((
                 StatusCode::METHOD_NOT_ALLOWED,
@@ -57,11 +60,11 @@ impl<M: MetricCollector> Api<M> {
                 "This node health checker is configured to only check its preconfigured test node"),
             )));
         }
-        Ok(PlainText("Hello World"))
+        unimplemented!();
     }
 
     #[oai(path = "/check_preconfigured_node", method = "get")]
-    async fn check_preconfigured_node(&self) -> PoemResult<PlainText<&'static str>> {
+    async fn check_preconfigured_node(&self) -> PoemResult<CompleteEvaluation> {
         if self.target_metric_collector.is_none() {
             return Err(PoemError::from((
                 StatusCode::METHOD_NOT_ALLOWED,
