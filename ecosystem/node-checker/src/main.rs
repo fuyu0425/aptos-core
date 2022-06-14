@@ -7,16 +7,30 @@ mod metric_collector;
 mod metric_evaluator;
 mod runner;
 
-use anyhow::Result;
+use anyhow::{anyhow, bail, Result};
 use clap::Parser;
+use lazy_static::lazy_static;
 use log::{debug, info};
 use metric_collector::{MetricCollector, ReqwestMetricCollector};
-use poem::{handler, listener::TcpListener, Route, Server};
-
+use poem::http::StatusCode;
+use poem::{
+    handler, listener::TcpListener, Error as PoemError, Result as PoemResult, Route, Server,
+};
 use poem_openapi::{payload::PlainText, OpenApi, OpenApiService};
-use url::Url;
-use std::path::PathBuf;
+use reqwest::Client as ReqwestClient;
 use runner::BlockingRunner;
+use std::path::PathBuf;
+use url::Url;
+
+const DEFAULT_METRICS_PORT: u16 = 9091;
+const DEFAULT_API_PORT: u16 = 8080;
+const DEFAULT_NOISE_PORT: u16 = 6180;
+
+lazy_static! {
+    static ref DEFAULT_METRICS_PORT_STR: String = format!("{}", DEFAULT_METRICS_PORT);
+    static ref DEFAULT_API_PORT_STR: String = format!("{}", DEFAULT_API_PORT);
+    static ref DEFAULT_NOISE_PORT_STR: String = format!("{}", DEFAULT_NOISE_PORT);
+}
 
 // TODO: Replace this with the real frontend, or perhaps an error handler if we
 // decide to route the frontend to just a static hoster such as nginx.
@@ -25,16 +39,38 @@ fn root() -> String {
     "Hello World!".to_string()
 }
 
-struct Api;
+struct Api<M: MetricCollector> {
+    pub baseline_metric_collector: M,
+    pub target_metric_collector: Option<M>,
+    pub allow_preconfigured_test_node_only: bool,
+}
 
-// TODO: There should be an endpoint that doesn't take in a target, but
-// it returns an error if the user hasn't specified a default target.
 #[OpenApi]
-impl Api {
+impl<M: MetricCollector> Api<M> {
     /// Hello world
     #[oai(path = "/check_node", method = "get")]
-    async fn run_check(&self) -> PlainText<&'static str> {
-        PlainText("Hello World")
+    async fn check_node(&self) -> PoemResult<PlainText<&'static str>> {
+        if self.allow_preconfigured_test_node_only {
+            return Err(PoemError::from((
+                StatusCode::METHOD_NOT_ALLOWED,
+                anyhow!(
+                "This node health checker is configured to only check its preconfigured test node"),
+            )));
+        }
+        Ok(PlainText("Hello World"))
+    }
+
+    #[oai(path = "/check_preconfigured_node", method = "get")]
+    async fn check_preconfigured_node(&self) -> PoemResult<PlainText<&'static str>> {
+        if self.target_metric_collector.is_none() {
+            return Err(PoemError::from((
+                StatusCode::METHOD_NOT_ALLOWED,
+                anyhow!(
+                    "This node health checker has not been set up with a preconfigured test node"
+                ),
+            )));
+        }
+        Ok(PlainText("Hello World"))
     }
 }
 
@@ -54,24 +90,50 @@ struct Args {
     #[clap(long, default_value = "20121")]
     listen_port: u16,
 
-    /// The URL of the baseline node.
+    /// The URL of the baseline node, e.g. http://fullnode.devnet.aptoslabs.com
+    /// We assume this is just the base and will add ports and paths to this.
     #[clap(long)]
     baseline_node_url: Url,
 
-    /// The (metric) evaluators to use.
+    /// The metrics port for the baseline node.
+    #[clap(long, default_value = &DEFAULT_METRICS_PORT_STR)]
+    baseline_metrics_port: u16,
+
+    /// The API port for the baseline node.
+    #[clap(long, default_value = &DEFAULT_API_PORT_STR)]
+    baseline_api_port: u16,
+
+    /// The port over which validator nodes can talk to the baseline node.
+    #[clap(long, default_value = &DEFAULT_NOISE_PORT_STR)]
+    baseline_noise_port: u16,
+
+    /// The (metric) evaluators to use, e.g. state_sync, api, etc.
     #[clap(long)]
     evaluators: Vec<String>,
 
-    /// If this is given, the user will be able to call the todo endpoint,
-    /// which takes no target, instead using this as the target. If
+    /// If this is given, the user will be able to call the check_preconfigured_node
+    /// endpoint, which takes no target, instead using this as the target. If
     /// allow_test_node_only is set, only the todo endpoint will work,
     /// the node will not respond to health check requests for other nodes.
     #[clap(long)]
-    test_node_url: Option<Url>,
+    target_node_url: Option<Url>,
 
-    /// See the help message of test_node_address,
+    // The following 3 arguments are only relevant if the user sets test_node_url.
+    /// The metrics port for the target node.
+    #[clap(long, default_value = &DEFAULT_METRICS_PORT_STR)]
+    target_metrics_port: u16,
+
+    /// The API port for the target node.
+    #[clap(long, default_value = &DEFAULT_API_PORT_STR)]
+    target_api_port: u16,
+
+    /// The port over which validator nodes can talk to the target node.
+    #[clap(long, default_value = &DEFAULT_NOISE_PORT_STR)]
+    target_noise_port: u16,
+
+    /// See the help message of target_node_url.
     #[clap(long)]
-    allow_test_node_only: bool,
+    allow_preconfigured_test_node_only: bool,
 }
 
 #[tokio::main]
@@ -88,9 +150,22 @@ async fn main() -> Result<()> {
 
     let version = std::env::var("CARGO_PKG_VERSION").unwrap_or_else(|_| "0.1.0".to_string());
 
-    let api = Api;
-    let api_service =
-        OpenApiService::new(api, "Aptos Node Checker", version).server("http://localhost:3000/api");
+    let baseline_metric_collector =
+        ReqwestMetricCollector::new(args.baseline_node_url.clone(), args.baseline_metrics_port);
+
+    let target_metric_collector = match args.target_node_url {
+        Some(url) => Some(ReqwestMetricCollector::new(url, args.target_metrics_port)),
+        None => None,
+    };
+
+    let api = Api {
+        baseline_metric_collector,
+        target_metric_collector,
+        allow_preconfigured_test_node_only: args.allow_preconfigured_test_node_only,
+    };
+
+    let api_service = OpenApiService::new(api, "Aptos Node Checker", version)
+        .server(format!("{}:{}/api", args.listen_address, args.listen_port));
     let ui = api_service.swagger_ui();
     let spec_json = api_service.spec_endpoint();
     let spec_yaml = api_service.spec_endpoint_yaml();

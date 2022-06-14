@@ -13,14 +13,16 @@ use url::Host;
 pub struct ReqwestMetricCollector {
     client: ReqwestClient,
 
-    /// This should be an address that points at the metrics port of the node.
-    /// It should not point to the /metrics endpoint, just the root, we will
-    /// add the /metrics endpoint ourselves.
+    /// We assume this points to the "base" of a node. We will add ports
+    /// and paths to this ourselves.
     node_url: Url,
+
+    /// Metrics port.
+    metrics_port: u16,
 }
 
 impl ReqwestMetricCollector {
-    pub fn new(node_url: Url) -> Self {
+    pub fn new(node_url: Url, metrics_port: u16) -> Self {
         let mut client_builder = ReqwestClient::builder();
         let mut is_localhost = false;
         if let Some(host) = node_url.host() {
@@ -44,25 +46,34 @@ impl ReqwestMetricCollector {
         ReqwestMetricCollector {
             client: client_builder.build().unwrap(),
             node_url,
+            metrics_port,
         }
+    }
+
+    fn get_metrics_endpoint(&self) -> Url {
+        let mut url = self.node_url.clone();
+        url.set_port(Some(self.metrics_port)).unwrap();
+        url.set_path("/metrics");
+        url
     }
 }
 
 #[async_trait]
 impl MetricCollector for ReqwestMetricCollector {
     async fn collect_metrics(&self) -> Result<Vec<String>, MetricCollectorError> {
-        debug!("Connecting to {} to collect metrics", self.node_url);
+        let url = self.get_metrics_endpoint();
+        debug!("Connecting to {} to collect metrics", url);
         let response = self
             .client
-            .get(self.node_url.clone())
+            .get(url.clone())
             .send()
             .await
-            .with_context(|| format!("Failed to get data from {}", self.node_url))
+            .with_context(|| format!("Failed to get data from {}", url))
             .map_err(|e| MetricCollectorError::GetDataError(anyhow!(e)))?;
         let body = response
             .text()
             .await
-            .with_context(|| format!("Failed to process response body from {}", self.node_url))
+            .with_context(|| format!("Failed to process response body from {}", url))
             .map_err(|e| MetricCollectorError::ResponseParseError(anyhow!(e)))?;
         Ok(body.lines().map(|line| line.to_owned()).collect())
     }
