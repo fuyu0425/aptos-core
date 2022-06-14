@@ -23,3 +23,17 @@ write up an acknowledgment that using a shared error type for each trait is some
 somewhat nasty coupling, but the alternative is probably overly complex.
 
 get info about this project to Jing. she can help me with user journey stuff.
+
+## from meeting with max
+- openapi good
+- rust good
+
+told him for continuous testing, we'll use non-metrics checks, like consensus.
+
+websocket / server side events (which is sort of like websockets + long polling (streamed response)). could be good if we decide to do continuous.
+
+do we use this tool for registration? max thinks yes. we need to verify that the user is running a VFN with a specific chain ID. we can use this as part of registration. make sure the checks are configurable.
+
+end of week sounds fast.
+
+openapi tomorrow.
