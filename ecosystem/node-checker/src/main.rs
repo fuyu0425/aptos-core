@@ -124,8 +124,10 @@ async fn main() -> Result<()> {
         allow_preconfigured_test_node_only: args.allow_preconfigured_test_node_only,
     };
 
-    let api_service = OpenApiService::new(api, "Aptos Node Checker", version)
-        .server(format!("{}:{}/api", args.listen_address, args.listen_port));
+    let api_service = OpenApiService::new(api, "Aptos Node Checker", version).server(format!(
+        "http://{}:{}/api",
+        args.listen_address, args.listen_port
+    ));
     let ui = api_service.swagger_ui();
     let spec_json = api_service.spec_endpoint();
     let spec_yaml = api_service.spec_endpoint_yaml();
