@@ -1,22 +1,32 @@
 use super::{Runner, RunnerError};
-use crate::metric_collector::MetricCollector;
+use crate::{metric_collector::MetricCollector, public_types::CompleteEvaluation, metric_evaluator::MetricsEvaluator};
 use anyhow::{Context, Result};
 use async_trait::async_trait;
+use clap::Parser;
+use humantime::parse_duration;
 use log::debug;
 use prometheus_parse::Scrape as PrometheusScrape;
 use std::time::Duration;
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Parser)]
+pub struct BlockingRunnerArgs {
+    #[clap(long, parse(try_from_str = parse_duration))]
+    pub metrics_fetch_delay: Duration,
+}
+
+#[derive(Debug)]
 pub struct BlockingRunner<M: MetricCollector> {
-    baseline_retriever: M,
-    metrics_fetch_delay: Duration,
+    args: BlockingRunnerArgs,
+    baseline_metric_collector: M,
+    evaluators: Vec<Box<dyn MetricsEvaluator>>,
 }
 
 impl<M: MetricCollector> BlockingRunner<M> {
-    pub fn new(baseline_retriever: M, metrics_fetch_delay: Duration) -> Self {
+    pub fn new(args: BlockingRunnerArgs, baseline_metric_collector: M, evaluators: Vec<Box<dyn MetricsEvaluator>>) -> Self {
         Self {
-            baseline_retriever,
-            metrics_fetch_delay,
+            args,
+            baseline_metric_collector,
+            evaluators,
         }
     }
 
@@ -34,17 +44,19 @@ impl<M: MetricCollector> BlockingRunner<M> {
 
 #[async_trait]
 impl<M: MetricCollector> Runner for BlockingRunner<M> {
-    async fn run<T: MetricCollector>(&self, target_retriever: T) -> Result<(), RunnerError> {
+    async fn run<T: MetricCollector>(
+        &self,
+        target_retriever: T,
+    ) -> Result<CompleteEvaluation, RunnerError> {
         debug!("Collecting first round of baseline metrics");
         let first_baseline_metrics = self
-            .baseline_retriever
+            .baseline_metric_collector
             .collect_metrics()
             .await
             .map_err(|e| RunnerError::MetricCollectorError(e))?;
 
         debug!("Collecting first round of target metrics");
-        let first_target_metrics = self
-            .baseline_retriever
+        let first_target_metrics = target_retriever
             .collect_metrics()
             .await
             .map_err(|e| RunnerError::MetricCollectorError(e))?;
@@ -52,18 +64,17 @@ impl<M: MetricCollector> Runner for BlockingRunner<M> {
         let first_baseline_metrics = self.parse_response(first_baseline_metrics)?;
         let first_target_metrics = self.parse_response(first_target_metrics)?;
 
-        tokio::time::sleep(self.metrics_fetch_delay).await;
+        tokio::time::sleep(self.args.metrics_fetch_delay).await;
 
         debug!("Collecting second round of baseline metrics");
         let second_baseline_metrics = self
-            .baseline_retriever
+            .baseline_metric_collector
             .collect_metrics()
             .await
             .map_err(|e| RunnerError::MetricCollectorError(e))?;
 
         debug!("Collecting second round of target metrics");
-        let second_target_metrics = self
-            .baseline_retriever
+        let second_target_metrics = target_retriever
             .collect_metrics()
             .await
             .map_err(|e| RunnerError::MetricCollectorError(e))?;
@@ -71,6 +82,22 @@ impl<M: MetricCollector> Runner for BlockingRunner<M> {
         let second_baseline_metrics = self.parse_response(second_baseline_metrics)?;
         let second_target_metrics = self.parse_response(second_target_metrics)?;
 
-        Ok(())
+        let mut evaluations = Vec::new();
+
+        for evaluator in &self.evaluators {
+            let mut es = evaluator
+                .evaluate_metrics(
+                    &first_baseline_metrics,
+                    &first_target_metrics,
+                    &second_baseline_metrics,
+                    &second_target_metrics,
+                )
+                .map_err(|e| RunnerError::MetricEvaluatorError(e))?;
+            evaluations.append(&mut es);
+        }
+
+        let complete_evaluation = CompleteEvaluation::from(evaluations);
+
+        Ok(complete_evaluation)
     }
 }

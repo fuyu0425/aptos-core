@@ -1,6 +1,5 @@
 use crate::public_types::Evaluation;
 use anyhow::{Error, Result};
-use async_trait::async_trait;
 use prometheus_parse::Scrape as PrometheusScrape;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 
@@ -30,6 +29,7 @@ impl std::error::Error for MetricsEvaluatorError {}
 
 /// todo describe the trait
 /// todo assert these trait constraints are necessary
+/// todo consider whether we need Clone if we need to spawn multiple handlers ourselves.
 ///
 /// This is only for metrics evaluation, we will need a different
 /// more permissive trait for other evaluation types. ideally we will still be able
@@ -37,15 +37,11 @@ impl std::error::Error for MetricsEvaluatorError {}
 /// if not, we can use a trait instead.
 ///
 /// Note:
-///  - Clone is required because multiple calls to spawn need to be static but also share
-///      the same todo instance (mostly for the in-memory versions).
-///
 ///  - Sync + Send is required because this will be a member of the todo which needs
 ///      to be used across async boundaries
 ///
 ///  - 'static is required because this will be stored on the todo which needs to be 'static
-#[async_trait]
-pub trait MetricsEvaluator: Clone + Sync + Send + 'static {
+pub trait MetricsEvaluator: Sync + Send {
     fn evaluate_metrics(
         &self,
         previous_baseline_metrics: &PrometheusScrape,
@@ -55,5 +51,11 @@ pub trait MetricsEvaluator: Clone + Sync + Send + 'static {
     ) -> Result<Vec<Evaluation>, MetricsEvaluatorError>;
 
     /// todo
-    fn get_name() -> String;
+    fn get_name(&self) -> String;
+}
+
+impl std::fmt::Debug for dyn MetricsEvaluator {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        write!(fmt, "MetricsEvaluator {{ name: {:?} }}", self.get_name())
+    }
 }

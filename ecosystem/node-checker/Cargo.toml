@@ -17,6 +17,7 @@ env_logger = "0.9"
 futures = "0.3.21"
 log = "0.4"
 once_cell = "1.10.0"
+humantime = "2.1.0"
 poem = { git = "https://github.com/banool/poem", features = ["anyhow"], branch = "add_yaml_spec" }
 poem-openapi = { git = "https://github.com/banool/poem", features = ["swagger-ui", "rapidoc", "redoc"], branch = "add_yaml_spec"}
 prometheus-parse = "0.2.2"

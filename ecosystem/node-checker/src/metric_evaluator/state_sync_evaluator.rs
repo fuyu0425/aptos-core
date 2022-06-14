@@ -2,21 +2,28 @@ use super::common::get_metric_value;
 use super::{MetricsEvaluator, MetricsEvaluatorError};
 use crate::public_types::Evaluation;
 use anyhow::Result;
+use clap::Parser;
 use log::debug;
 use prometheus_parse::Scrape as PrometheusScrape;
 use prometheus_parse::Value as PrometheusValue;
 
 const STATE_SYNC_METRIC: &str = "aptos_state_sync_version";
 
+#[derive(Clone, Debug, Parser)]
+pub struct StateSyncMetricsEvaluatorArgs {
+    #[clap(long)]
+    pub version_delta_tolerance: u64,
+}
+
 #[derive(Clone, Debug)]
 struct StateSyncMetricsEvaluator {
-    version_delta_tolerance: u64,
+    args: StateSyncMetricsEvaluatorArgs,
 }
 
 impl StateSyncMetricsEvaluator {
-    pub fn new(version_delta_tolerance: u64) -> Self {
+    pub fn new(args: StateSyncMetricsEvaluatorArgs) -> Self {
         Self {
-            version_delta_tolerance,
+            args,
         }
     }
 
@@ -82,7 +89,7 @@ impl MetricsEvaluator for StateSyncMetricsEvaluator {
                     }
                     } else {
                         let delta_from_baseline = latest_baseline_version - latest;
-                        if delta_from_baseline > self.version_delta_tolerance {
+                        if delta_from_baseline > self.args.version_delta_tolerance {
                             Evaluation {
                                 headline: "State sync version is lagging".to_string(),
                                 score: 70,
@@ -90,7 +97,7 @@ impl MetricsEvaluator for StateSyncMetricsEvaluator {
                                     "Successfully pulled metrics from target node twice and saw the \
                                     version was progressing, but it is lagging {} versions behind the baseline node. \
                                     Target version: {}. Baseline version: {}. Tolerance: {}",
-                                    delta_from_baseline, latest, latest_baseline_version, self.version_delta_tolerance
+                                    delta_from_baseline, latest, latest_baseline_version, self.args.version_delta_tolerance
                                 ),
                             }
                         } else {
@@ -102,7 +109,7 @@ impl MetricsEvaluator for StateSyncMetricsEvaluator {
                                     version was progressing, and saw that it is within tolerance \
                                     of the baseline node. \
                                     Target version: {}. Baseline version: {}. Tolerance: {}",
-                                    latest, latest_baseline_version, self.version_delta_tolerance
+                                    latest, latest_baseline_version, self.args.version_delta_tolerance
                                 ),
                             }
                         }
@@ -118,7 +125,7 @@ impl MetricsEvaluator for StateSyncMetricsEvaluator {
         Ok(evaluations)
     }
 
-    fn get_name() -> String {
+    fn get_name(&self) -> String {
         "State Sync".to_string()
     }
 }
@@ -149,7 +156,7 @@ mod test {
             false => vec![get_metric_string(latest_target_version)],
         };
 
-        let state_sync_metrics_evaluator = StateSyncMetricsEvaluator::new(1000);
+        let state_sync_metrics_evaluator = StateSyncMetricsEvaluator::new(StateSyncMetricsEvaluatorArgs { version_delta_tolerance: 1000 });
         let evaluations = state_sync_metrics_evaluator
             .evaluate_metrics(
                 &PrometheusScrape::parse(
