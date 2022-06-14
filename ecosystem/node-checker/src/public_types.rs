@@ -31,10 +31,10 @@ impl From<Vec<Evaluation>> for CompleteEvaluation {
         let summary_score =
             evaluations.iter().map(|e| e.score).sum::<u8>() / evaluations.len() as u8;
         let summary_explanation = match summary_score {
-            summary_score if summary_score > 95 => format!("{}, awesome!", summary_score),
-            summary_score if summary_score > 80 => format!("{}, good!", summary_score),
-            summary_score if summary_score > 50 => format!("{}, getting there!", summary_score),
-            wildcard => format!("{}, not good enough :(", wildcard),
+            summary_score if summary_score > 95 => format!("{}: Awesome!", summary_score),
+            summary_score if summary_score > 80 => format!("{}: Good!", summary_score),
+            summary_score if summary_score > 50 => format!("{}: Getting there!", summary_score),
+            wildcard => format!("{}: Not good enough :(", wildcard),
         };
         CompleteEvaluation {
             evaluations,

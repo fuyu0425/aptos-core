@@ -6,6 +6,7 @@ use async_trait::async_trait;
 use log::debug;
 use reqwest::Client as ReqwestClient;
 use reqwest::Url;
+use std::time::Duration;
 use url::Host;
 
 // TODO Make it possible to reject nodes unless they are a specific type.
@@ -23,7 +24,7 @@ pub struct ReqwestMetricCollector {
 
 impl ReqwestMetricCollector {
     pub fn new(node_url: Url, metrics_port: u16) -> Self {
-        let mut client_builder = ReqwestClient::builder();
+        let mut client_builder = ReqwestClient::builder().timeout(Duration::from_secs(4));
         let mut is_localhost = false;
         if let Some(host) = node_url.host() {
             match host {
@@ -53,7 +54,7 @@ impl ReqwestMetricCollector {
     fn get_metrics_endpoint(&self) -> Url {
         let mut url = self.node_url.clone();
         url.set_port(Some(self.metrics_port)).unwrap();
-        url.set_path("/metrics");
+        url.set_path("metrics");
         url
     }
 }
