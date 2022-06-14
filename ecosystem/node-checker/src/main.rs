@@ -22,7 +22,7 @@ use poem::{
     handler, listener::TcpListener, Error as PoemError, Result as PoemResult, Route, Server,
 };
 use poem_openapi::{payload::Json, OpenApi, OpenApiService};
-use public_types::CompleteEvaluation;
+use public_types::{CompleteEvaluation, NodeUrl};
 use reqwest::Client as ReqwestClient;
 use runner::{BlockingRunner, BlockingRunnerArgs, Runner};
 use std::collections::HashSet;
@@ -49,7 +49,7 @@ struct Api<M: MetricCollector, R: Runner> {
 #[OpenApi]
 impl<M: MetricCollector, R: Runner> Api<M, R> {
     #[oai(path = "/check_node", method = "get")]
-    async fn check_node(&self) -> PoemResult<Json<CompleteEvaluation>> {
+    async fn check_node(&self, target_node: Json<NodeUrl>) -> PoemResult<Json<CompleteEvaluation>> {
         if self.allow_preconfigured_test_node_only {
             return Err(PoemError::from((
                 StatusCode::METHOD_NOT_ALLOWED,
@@ -57,7 +57,24 @@ impl<M: MetricCollector, R: Runner> Api<M, R> {
                 "This node health checker is configured to only check its preconfigured test node"),
             )));
         }
-        unimplemented!();
+        let mut target_url = target_node.url.to_string();
+        if !target_url.starts_with("http") {
+            target_url = format!("http://{}", target_url);
+        }
+        let target_url = match Url::parse(&target_url) {
+            Ok(url) => url,
+            Err(e) => return Err(PoemError::from((StatusCode::BAD_REQUEST, anyhow!(e)))),
+        };
+        let target_metric_collector =
+            ReqwestMetricCollector::new(target_url, target_node.metrics_port);
+        let complete_evaluation_result = self.runner.run(&target_metric_collector).await;
+        match complete_evaluation_result {
+            Ok(complete_evaluation) => Ok(Json(complete_evaluation)),
+            Err(e) => Err(PoemError::from((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                anyhow!(e),
+            ))),
+        }
     }
 
     #[oai(path = "/check_preconfigured_node", method = "get")]

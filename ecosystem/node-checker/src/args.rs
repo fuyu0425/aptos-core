@@ -4,14 +4,14 @@ use clap::Parser;
 use lazy_static::lazy_static;
 use url::Url;
 
-const DEFAULT_METRICS_PORT: u16 = 9101;
-const DEFAULT_API_PORT: u16 = 8080;
-const DEFAULT_NOISE_PORT: u16 = 6180;
+pub const DEFAULT_METRICS_PORT: u16 = 9101;
+pub const DEFAULT_API_PORT: u16 = 8080;
+pub const DEFAULT_NOISE_PORT: u16 = 6180;
 
 lazy_static! {
-    static ref DEFAULT_METRICS_PORT_STR: String = format!("{}", DEFAULT_METRICS_PORT);
-    static ref DEFAULT_API_PORT_STR: String = format!("{}", DEFAULT_API_PORT);
-    static ref DEFAULT_NOISE_PORT_STR: String = format!("{}", DEFAULT_NOISE_PORT);
+    pub static ref DEFAULT_METRICS_PORT_STR: String = format!("{}", DEFAULT_METRICS_PORT);
+    pub static ref DEFAULT_API_PORT_STR: String = format!("{}", DEFAULT_API_PORT);
+    pub static ref DEFAULT_NOISE_PORT_STR: String = format!("{}", DEFAULT_NOISE_PORT);
 }
 
 #[derive(Clone, Debug, Parser)]
