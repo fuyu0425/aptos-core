@@ -1,18 +1,20 @@
+// Copyright (c) Aptos
+// SPDX-License-Identifier: Apache-2.0
+
 use crate::metric_evaluator::StateSyncMetricsEvaluatorArgs;
 use crate::runner::BlockingRunnerArgs;
 use clap::Parser;
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use url::Url;
 
 pub const DEFAULT_METRICS_PORT: u16 = 9101;
 pub const DEFAULT_API_PORT: u16 = 8080;
 pub const DEFAULT_NOISE_PORT: u16 = 6180;
 
-lazy_static! {
-    pub static ref DEFAULT_METRICS_PORT_STR: String = format!("{}", DEFAULT_METRICS_PORT);
-    pub static ref DEFAULT_API_PORT_STR: String = format!("{}", DEFAULT_API_PORT);
-    pub static ref DEFAULT_NOISE_PORT_STR: String = format!("{}", DEFAULT_NOISE_PORT);
-}
+pub static DEFAULT_METRICS_PORT_STR: Lazy<String> =
+    Lazy::new(|| format!("{}", DEFAULT_METRICS_PORT));
+pub static DEFAULT_API_PORT_STR: Lazy<String> = Lazy::new(|| format!("{}", DEFAULT_API_PORT));
+pub static DEFAULT_NOISE_PORT_STR: Lazy<String> = Lazy::new(|| format!("{}", DEFAULT_NOISE_PORT));
 
 #[derive(Clone, Debug, Parser)]
 #[clap(author, version, about, long_about = None)]

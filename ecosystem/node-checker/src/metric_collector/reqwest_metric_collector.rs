@@ -1,3 +1,6 @@
+// Copyright (c) Aptos
+// SPDX-License-Identifier: Apache-2.0
+
 use std::net::{IpAddr, Ipv4Addr};
 
 use super::traits::{MetricCollector, MetricCollectorError};

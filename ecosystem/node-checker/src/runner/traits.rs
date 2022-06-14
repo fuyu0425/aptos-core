@@ -1,3 +1,6 @@
+// Copyright (c) Aptos
+// SPDX-License-Identifier: Apache-2.0
+
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use std::fmt::{Display, Formatter, Result as FmtResult};

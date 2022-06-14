@@ -1,3 +1,6 @@
+// Copyright (c) Aptos
+// SPDX-License-Identifier: Apache-2.0
+
 use log::warn;
 use prometheus_parse::Scrape as PrometheusScrape;
 use prometheus_parse::Value as PrometheusValue;
