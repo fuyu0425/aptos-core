@@ -52,7 +52,7 @@ impl MetricsEvaluator for StateSyncMetricsEvaluator {
                 headline: "State sync version metric missing".to_string(),
                 score: 0,
                 explanation:
-                    "The first set of metrics from the target node is missing the state sync metric"
+                    "The first set of metrics from the target node is missing the state sync metric."
                         .to_string(),
             });
         }
@@ -64,7 +64,7 @@ impl MetricsEvaluator for StateSyncMetricsEvaluator {
             evaluations.push(Evaluation {
                 headline: "State sync version metric missing".to_string(),
                 score: 0,
-                explanation: "The second set of metrics from the target node is missing the state sync metric".to_string(),
+                explanation: "The second set of metrics from the target node is missing the state sync metric.".to_string(),
             });
         }
 
@@ -85,7 +85,7 @@ impl MetricsEvaluator for StateSyncMetricsEvaluator {
                         Evaluation{
                         headline: "State sync version is not progressing".to_string(),
                         score: 50,
-                        explanation: "Successfully pulled metrics from target node twice, but the metrics aren't progressing".to_string(),
+                        explanation: "Successfully pulled metrics from target node twice, but the metrics aren't progressing.".to_string(),
                     }
                     } else {
                         // We convert to i64 to avoid potential overflow if the target is ahead of the baseline.
@@ -97,7 +97,7 @@ impl MetricsEvaluator for StateSyncMetricsEvaluator {
                                 explanation: format!(
                                     "Successfully pulled metrics from target node twice and saw the \
                                     version was progressing, but it is lagging {} versions behind the baseline node. \
-                                    Target version: {}. Baseline version: {}. Tolerance: {}",
+                                    Target version: {}. Baseline version: {}. Tolerance: {}.",
                                     delta_from_baseline, latest, latest_baseline_version, self.args.version_delta_tolerance
                                 ),
                             }
@@ -109,7 +109,7 @@ impl MetricsEvaluator for StateSyncMetricsEvaluator {
                                     "Successfully pulled metrics from target node twice, saw the \
                                     version was progressing, and saw that it is within tolerance \
                                     of the baseline node. \
-                                    Target version: {}. Baseline version: {}. Tolerance: {}",
+                                    Target version: {}. Baseline version: {}. Tolerance: {}.",
                                     latest,
                                     latest_baseline_version,
                                     self.args.version_delta_tolerance

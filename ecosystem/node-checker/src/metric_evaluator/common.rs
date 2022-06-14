@@ -1,8 +1,13 @@
+use log::warn;
 use prometheus_parse::Scrape as PrometheusScrape;
 use prometheus_parse::Value as PrometheusValue;
-use log::warn;
 
-pub fn get_metric_value(metrics: &PrometheusScrape, metric_name: &str, label_key: &str, label_value: &str) -> Option<u64> {
+pub fn get_metric_value(
+    metrics: &PrometheusScrape,
+    metric_name: &str,
+    label_key: &str,
+    label_value: &str,
+) -> Option<u64> {
     for s in &metrics.samples {
         if s.metric == metric_name {
             let lv = s.labels.get(label_key);
@@ -17,7 +22,7 @@ pub fn get_metric_value(metrics: &PrometheusScrape, metric_name: &str, label_key
                 PrometheusValue::Gauge(v) => return Some(v.round() as u64),
                 PrometheusValue::Untyped(v) => return Some(v.round() as u64),
                 wildcard => {
-                   warn!("Found unexpected metric type: {:?}", wildcard);
+                    warn!("Found unexpected metric type: {:?}", wildcard);
                 }
             }
         }
