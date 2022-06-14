@@ -11,9 +11,9 @@ use log::debug;
 use prometheus_parse::Scrape as PrometheusScrape;
 use std::time::Duration;
 
-#[derive(Debug, Parser)]
+#[derive(Clone, Debug, Parser)]
 pub struct BlockingRunnerArgs {
-    #[clap(long, parse(try_from_str = parse_duration))]
+    #[clap(long, parse(try_from_str = parse_duration), default_value = "5 seconds")]
     pub metrics_fetch_delay: Duration,
 }
 
@@ -53,7 +53,7 @@ impl<M: MetricCollector> BlockingRunner<M> {
 impl<M: MetricCollector> Runner for BlockingRunner<M> {
     async fn run<T: MetricCollector>(
         &self,
-        target_retriever: T,
+        target_retriever: &T,
     ) -> Result<CompleteEvaluation, RunnerError> {
         debug!("Collecting first round of baseline metrics");
         let first_baseline_metrics = self
