@@ -10,13 +10,12 @@ mod runner;
 use anyhow::Result;
 use clap::Parser;
 use log::{debug, info};
-use metric_collector::{MetricCollector, NamedNodeUrl, ReqwestMetricCollector};
+use metric_collector::{MetricCollector, ReqwestMetricCollector};
 use poem::{handler, listener::TcpListener, Route, Server};
 
 use poem_openapi::{payload::PlainText, OpenApi, OpenApiService};
 use url::Url;
 use std::path::PathBuf;
-use reqwest::Url;
 use runner::BlockingRunner;
 
 // TODO: Replace this with the real frontend, or perhaps an error handler if we
@@ -28,9 +27,6 @@ fn root() -> String {
 
 struct Api;
 
-// TODO: Should we host an endpoint that says what node types
-// the user can work with? Derived from the keys of baseline_node_addresses.
-//
 // TODO: There should be an endpoint that doesn't take in a target, but
 // it returns an error if the user hasn't specified a default target.
 #[OpenApi]

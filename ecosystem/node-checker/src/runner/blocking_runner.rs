@@ -27,8 +27,12 @@ impl<M: MetricCollector> BlockingRunner<M> {
     }
 }
 
-#[async_trait]
+// todo, we need to collect the target metrics first and then collect the baseline metrics
+// because we need to know what kind of node we're talking to. To this end, the metric
+// collector should probably take in a map of all the baseline retrievers. There needs to
+// be a key construction function, probs just network+node_type.
 
+#[async_trait]
 impl<M: MetricCollector> Runner for BlockingRunner<M> {
     async fn run<T: MetricCollector>(&self, target_retriever: T) -> Result<(), RunnerError> {
         debug!("Collecting first round of baseline metrics");
