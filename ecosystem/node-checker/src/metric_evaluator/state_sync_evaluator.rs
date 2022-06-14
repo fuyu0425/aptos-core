@@ -1,14 +1,12 @@
 // Copyright (c) Aptos
 // SPDX-License-Identifier: Apache-2.0
 
-use super::common::get_metric_value;
-use super::{MetricsEvaluator, MetricsEvaluatorError};
+use super::{common::get_metric_value, MetricsEvaluator, MetricsEvaluatorError};
 use crate::public_types::Evaluation;
 use anyhow::Result;
 use clap::Parser;
 use log::debug;
-use prometheus_parse::Scrape as PrometheusScrape;
-use prometheus_parse::Value as PrometheusValue;
+use prometheus_parse::{Scrape as PrometheusScrape, Value as PrometheusValue};
 
 pub const NAME: &str = "state_sync";
 

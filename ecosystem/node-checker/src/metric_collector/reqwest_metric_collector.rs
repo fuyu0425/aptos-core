@@ -7,8 +7,7 @@ use super::traits::{MetricCollector, MetricCollectorError};
 use anyhow::{anyhow, Context, Result};
 use async_trait::async_trait;
 use log::debug;
-use reqwest::Client as ReqwestClient;
-use reqwest::Url;
+use reqwest::{Client as ReqwestClient, Url};
 use std::time::Duration;
 use url::Host;
 
