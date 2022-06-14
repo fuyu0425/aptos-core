@@ -8,6 +8,7 @@ use clap::Parser;
 use log::{debug, info};
 use poem::{handler, listener::TcpListener, Route, Server};
 use poem_openapi::{payload::PlainText, OpenApi, OpenApiService};
+use url::Url;
 
 // TODO: Replace this with the real frontend, or perhaps an error handler if we
 // decide to route the frontend to just a static hoster such as nginx.
@@ -42,6 +43,14 @@ struct Args {
     /// What port to listen on.
     #[clap(long, default_value = "20121")]
     listen_port: u16,
+
+    /// The URL of the baseline node.
+    #[clap(long)]
+    baseline_node_url: Url,
+
+    /// The (metric) evaluators to use.
+    #[clap(long)]
+    evaluators: Vec<String>,
 }
 
 #[tokio::main]
