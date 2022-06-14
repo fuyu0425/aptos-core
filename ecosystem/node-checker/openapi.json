@@ -1,0 +1,100 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Aptos Node Checker",
+    "version": "0.1.0"
+  },
+  "servers": [
+    {
+      "url": "0.0.0.0:20121/api"
+    }
+  ],
+  "tags": [],
+  "paths": {
+    "/check_node": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompleteEvaluation"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/check_preconfigured_node": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompleteEvaluation"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CompleteEvaluation": {
+        "type": "object",
+        "required": [
+          "evaluations",
+          "summary_score",
+          "summary_explanation"
+        ],
+        "properties": {
+          "evaluations": {
+            "type": "array",
+            "description": "All the evaluations we ran.",
+            "items": {
+              "$ref": "#/components/schemas/Evaluation"
+            }
+          },
+          "summary_score": {
+            "type": "integer",
+            "format": "uint8",
+            "description": "An aggeregated summary (method TBA)."
+          },
+          "summary_explanation": {
+            "type": "string",
+            "description": "An overall explanation of the results."
+          }
+        }
+      },
+      "Evaluation": {
+        "type": "object",
+        "required": [
+          "headline",
+          "score",
+          "explanation"
+        ],
+        "properties": {
+          "headline": {
+            "type": "string",
+            "description": "Headline of the evaluation, e.g. \"Healthy!\" or \"Metrics missing!\"."
+          },
+          "score": {
+            "type": "integer",
+            "format": "uint8",
+            "description": "Score out of 100."
+          },
+          "explanation": {
+            "type": "string",
+            "description": "Explanation of the evaluation."
+          }
+        }
+      }
+    }
+  }
+}
