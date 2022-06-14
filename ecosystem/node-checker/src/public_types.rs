@@ -58,6 +58,9 @@ pub struct Evaluation {
 
     /// Explanation of the evaluation.
     pub explanation: String,
+
+    /// Name of the evaluator where the evaluation came from, e.g. state_sync.
+    pub source: String,
 }
 
 #[derive(Clone, Debug, PoemObject)]

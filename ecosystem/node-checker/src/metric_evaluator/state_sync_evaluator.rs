@@ -54,6 +54,7 @@ impl MetricsEvaluator for StateSyncMetricsEvaluator {
                 explanation:
                     "The first set of metrics from the target node is missing the state sync metric."
                         .to_string(),
+                source: self.get_name(),
             });
         }
 
@@ -65,6 +66,7 @@ impl MetricsEvaluator for StateSyncMetricsEvaluator {
                 headline: "State sync version metric missing".to_string(),
                 score: 0,
                 explanation: "The second set of metrics from the target node is missing the state sync metric.".to_string(),
+                source: self.get_name(),
             });
         }
 
@@ -86,6 +88,7 @@ impl MetricsEvaluator for StateSyncMetricsEvaluator {
                         headline: "State sync version is not progressing".to_string(),
                         score: 50,
                         explanation: "Successfully pulled metrics from target node twice, but the metrics aren't progressing.".to_string(),
+                        source: self.get_name(),
                     }
                     } else {
                         // We convert to i64 to avoid potential overflow if the target is ahead of the baseline.
@@ -100,6 +103,7 @@ impl MetricsEvaluator for StateSyncMetricsEvaluator {
                                     Target version: {}. Baseline version: {}. Tolerance: {}.",
                                     delta_from_baseline, latest, latest_baseline_version, self.args.version_delta_tolerance
                                 ),
+                                source: self.get_name(),
                             }
                         } else {
                             Evaluation {
@@ -114,6 +118,7 @@ impl MetricsEvaluator for StateSyncMetricsEvaluator {
                                     latest_baseline_version,
                                     self.args.version_delta_tolerance
                                 ),
+                                source: self.get_name(),
                             }
                         }
                     }
