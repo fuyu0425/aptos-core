@@ -1,5 +1,8 @@
 use super::{Runner, RunnerError};
-use crate::{metric_collector::MetricCollector, public_types::CompleteEvaluation, metric_evaluator::MetricsEvaluator};
+use crate::{
+    metric_collector::MetricCollector, metric_evaluator::MetricsEvaluator,
+    public_types::CompleteEvaluation,
+};
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use clap::Parser;
@@ -22,7 +25,11 @@ pub struct BlockingRunner<M: MetricCollector> {
 }
 
 impl<M: MetricCollector> BlockingRunner<M> {
-    pub fn new(args: BlockingRunnerArgs, baseline_metric_collector: M, evaluators: Vec<Box<dyn MetricsEvaluator>>) -> Self {
+    pub fn new(
+        args: BlockingRunnerArgs,
+        baseline_metric_collector: M,
+        evaluators: Vec<Box<dyn MetricsEvaluator>>,
+    ) -> Self {
         Self {
             args,
             baseline_metric_collector,

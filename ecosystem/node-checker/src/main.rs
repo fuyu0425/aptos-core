@@ -3,14 +3,17 @@
 #![allow(unused_imports)]
 #![allow(unused_variables)]
 
+mod args;
+mod build_evaluators;
 mod metric_collector;
 mod metric_evaluator;
 mod public_types;
 mod runner;
 
 use anyhow::{anyhow, bail, Context, Result};
+use args::Args;
+use build_evaluators::build_evaluators;
 use clap::Parser;
-use lazy_static::lazy_static;
 use log::{debug, info};
 use metric_collector::{MetricCollector, ReqwestMetricCollector};
 use metric_evaluator::MetricsEvaluator;
@@ -22,20 +25,11 @@ use poem_openapi::{payload::Json, OpenApi, OpenApiService};
 use public_types::CompleteEvaluation;
 use reqwest::Client as ReqwestClient;
 use runner::{BlockingRunner, BlockingRunnerArgs, Runner};
+use std::collections::HashSet;
 use std::hash::Hash;
 use std::path::PathBuf;
-use std::collections::HashSet;
+use std::sync::Arc;
 use url::Url;
-
-const DEFAULT_METRICS_PORT: u16 = 9091;
-const DEFAULT_API_PORT: u16 = 8080;
-const DEFAULT_NOISE_PORT: u16 = 6180;
-
-lazy_static! {
-    static ref DEFAULT_METRICS_PORT_STR: String = format!("{}", DEFAULT_METRICS_PORT);
-    static ref DEFAULT_API_PORT_STR: String = format!("{}", DEFAULT_API_PORT);
-    static ref DEFAULT_NOISE_PORT_STR: String = format!("{}", DEFAULT_NOISE_PORT);
-}
 
 // TODO: Replace this with the real frontend, or perhaps an error handler if we
 // decide to route the frontend to just a static hoster such as nginx.
@@ -76,84 +70,19 @@ impl<M: MetricCollector, R: Runner> Api<M, R> {
                 ),
             )));
         }
-
-        let e = CompleteEvaluation::from(vec![]);
-        Ok(Json(e))
+        let complete_evaluation_result = self
+            .runner
+            .run(self.target_metric_collector.as_ref().unwrap())
+            .await;
+        match complete_evaluation_result {
+            Ok(complete_evaluation) => Ok(Json(complete_evaluation)),
+            // Consider returning error codes within the response.
+            Err(e) => Err(PoemError::from((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                anyhow!(e),
+            ))),
+        }
     }
-}
-
-#[derive(Parser, Debug)]
-#[clap(author, version, about, long_about = None)]
-struct Args {
-    /// Whether to enable debug logging or not. This is a shortcut for the
-    /// standard env logger configuration via env vars
-    #[clap(short, long)]
-    debug: bool,
-
-    /// What address to listen on.
-    #[clap(long, default_value = "0.0.0.0")]
-    listen_address: String,
-
-    /// What port to listen on.
-    #[clap(long, default_value = "20121")]
-    listen_port: u16,
-
-    /// The URL of the baseline node, e.g. http://fullnode.devnet.aptoslabs.com
-    /// We assume this is just the base and will add ports and paths to this.
-    #[clap(long)]
-    baseline_node_url: Url,
-
-    /// The metrics port for the baseline node.
-    #[clap(long, default_value = &DEFAULT_METRICS_PORT_STR)]
-    baseline_metrics_port: u16,
-
-    /// The API port for the baseline node.
-    #[clap(long, default_value = &DEFAULT_API_PORT_STR)]
-    baseline_api_port: u16,
-
-    /// The port over which validator nodes can talk to the baseline node.
-    #[clap(long, default_value = &DEFAULT_NOISE_PORT_STR)]
-    baseline_noise_port: u16,
-
-    /// The (metric) evaluators to use, e.g. state_sync, api, etc.
-    #[clap(long)]
-    evaluators: Vec<String>,
-
-    /// If this is given, the user will be able to call the check_preconfigured_node
-    /// endpoint, which takes no target, instead using this as the target. If
-    /// allow_test_node_only is set, only the todo endpoint will work,
-    /// the node will not respond to health check requests for other nodes.
-    #[clap(long)]
-    target_node_url: Option<Url>,
-
-    // The following 3 arguments are only relevant if the user sets test_node_url.
-    /// The metrics port for the target node.
-    #[clap(long, default_value = &DEFAULT_METRICS_PORT_STR)]
-    target_metrics_port: u16,
-
-    /// The API port for the target node.
-    #[clap(long, default_value = &DEFAULT_API_PORT_STR)]
-    target_api_port: u16,
-
-    /// The port over which validator nodes can talk to the target node.
-    #[clap(long, default_value = &DEFAULT_NOISE_PORT_STR)]
-    target_noise_port: u16,
-
-    /// See the help message of target_node_url.
-    #[clap(long)]
-    allow_preconfigured_test_node_only: bool,
-
-    #[clap(flatten)]
-    blocking_runner_args: BlockingRunnerArgs,
-}
-
-fn build_evaluators(args: &Args) -> Result<Vec<Box< dyn MetricsEvaluator>>> {
-    let evaluator_strings: HashSet<String> = args.evaluators.iter().cloned().collect();
-    if evaluator_strings.is_empty() {
-        bail!("No evaluators specified");
-    }
-    let mut evaluators = vec![];
-    Ok(evaluators)
 }
 
 #[tokio::main]
@@ -174,13 +103,20 @@ async fn main() -> Result<()> {
         ReqwestMetricCollector::new(args.baseline_node_url.clone(), args.baseline_metrics_port);
 
     let target_metric_collector = match args.target_node_url {
-        Some(ref url) => Some(ReqwestMetricCollector::new(url.clone(), args.target_metrics_port)),
+        Some(ref url) => Some(ReqwestMetricCollector::new(
+            url.clone(),
+            args.target_metrics_port,
+        )),
         None => None,
     };
 
     let evaluators = build_evaluators(&args).context("Failed to build evaluators")?;
 
-    let runner = BlockingRunner::new(args.blocking_runner_args, baseline_metric_collector, evaluators);
+    let runner = BlockingRunner::new(
+        args.blocking_runner_args,
+        baseline_metric_collector,
+        evaluators,
+    );
 
     let api = Api {
         runner,

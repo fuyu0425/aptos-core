@@ -2,7 +2,11 @@ use anyhow::{Error, Result};
 use async_trait::async_trait;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 
-use crate::{metric_collector::{MetricCollector, MetricCollectorError}, public_types::CompleteEvaluation, metric_evaluator::MetricsEvaluatorError};
+use crate::{
+    metric_collector::{MetricCollector, MetricCollectorError},
+    metric_evaluator::MetricsEvaluatorError,
+    public_types::CompleteEvaluation,
+};
 
 // TODO: Consider using thiserror.
 
@@ -54,5 +58,8 @@ struct RunnerResult {}
 #[async_trait]
 pub trait Runner: Sync + Send + 'static {
     // TODO: add proper result type.
-    async fn run<M: MetricCollector>(&self, target_retriever: M) -> Result<CompleteEvaluation, RunnerError>;
+    async fn run<M: MetricCollector>(
+        &self,
+        target_retriever: M,
+    ) -> Result<CompleteEvaluation, RunnerError>;
 }
