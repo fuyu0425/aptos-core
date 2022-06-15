@@ -101,3 +101,6 @@ serviceAccount:
 
 # Load test-data for starting a test network
 loadTestGenesis: false
+
+# Number of validators to deploy
+numValidators: 1

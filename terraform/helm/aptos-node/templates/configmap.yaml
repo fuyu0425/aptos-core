@@ -1,11 +1,15 @@
+# TODO(rustielin): make option to specify node config for each validator/fullnode
+{{- range $i, $e := until (int .Values.numValidators) }}
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "aptos-validator.fullname" . }}
+  name: {{ include "aptos-validator.fullname" $ }}-{{$i}}
   labels:
-    {{- include "aptos-validator.labels" . | nindent 4 }}
+    {{- include "aptos-validator.labels" $ | nindent 4 }}
 data:
-{{ tpl (.Files.Glob "files/configs/*.yaml").AsConfig . | indent 2 }}
+{{ tpl ($.Files.Glob "files/configs/*.yaml").AsConfig $ | indent 2 }}
+{{- end }}
 
 {{- if .Values.loadTestGenesis }}
 ---
