@@ -6,6 +6,7 @@ chain:
 imageTag: testnet
 
 validator:
+  enabled: false
   name:
   image:
     repo: aptoslabs/validator
@@ -39,6 +40,7 @@ validator:
   exposeRestApi: false
 
 fullnode:
+  enabled: true
   groups:
   - name: fullnode
     replicas: 1

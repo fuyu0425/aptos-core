@@ -1,0 +1,151 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "aptos-genesis.fullname" . }}-layout-e{{ .Values.chain.era }}
+  labels:
+    {{- include "aptos-genesis.labels" . | nindent 4 }}
+data:
+  layout.yaml: |-
+    root_key: "0x5243ca72b0766d9e9cbf2debf6153443b01a1e0e6d086c7ea206eaf6f8043956"
+    users:
+    {{- range $user := .Values.genesis.users }}
+      - {{ $user.name | quote }}
+    {{- end -}}
+    chain_id: {{ .Values.chain.chain_id }}
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "aptos-genesis.fullname" . }}
+  labels:
+    {{- include "aptos-genesis.labels" . | nindent 4 }}
+rules:
+- apiGroups: [""]
+  verbs: ["list", "create", "delete"]
+  resources: ["configmaps", "secrets", "persistentvolumeclaims"]
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "aptos-genesis.fullname" . }}
+  labels:
+    {{- include "aptos-genesis.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "aptos-genesis.fullname" . }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "aptos-genesis.serviceAccountName" . }}
+
+---
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "aptos-genesis.fullname" . }}-e{{ .Values.chain.era }}
+  labels:
+    {{- include "aptos-genesis.labels" . | nindent 4 }}
+    app.kubernetes.io/name: genesis
+spec:
+  template:
+    metadata:
+      labels:
+        {{- include "aptos-genesis.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/name: genesis
+      annotations:
+        seccomp.security.alpha.kubernetes.io/pod: runtime/default
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: genesis
+        image: {{ .Values.genesis.image.repo }}:{{ .Values.genesis.image.tag | default .Values.imageTag }}
+        imagePullPolicy: {{ .Values.genesis.image.pullPolicy }}
+        workingDir: /tmp
+        command:
+        - sh
+        - -c
+        - |-
+          set -ex
+
+          #
+          # Runs all of genesis in /tmp and creates the necessary k8s configmaps to start up nodes
+          #
+
+          # generate all validator configurations
+          {{- range $user := .Values.genesis.users }}
+          user_dir="/tmp/{{ $user.name }}"
+          mkdir $user_dir
+          aptos genesis generate-keys --output-dir $user_dir
+          aptos genesis set-validator-configuration --keys-dir $user_dir --local-repository-dir /tmp \
+            --username $user \
+            --validator-host {{ $user.validator_host }}:6180 \
+            --full-node-host {{ $user.fullnode_host }}:6182
+          {{- end -}}
+
+          # get the framework
+          # this is the directory the aptos-framework is located in the aptoslabs/init docker image
+          FRAMEWORK_DIR="/aptos-framework/move/modules"
+          cp -R $FRAMEWORK_DIR /tmp/framework
+
+          aptos genesis generate-genesis --local-repository-dir /tmp --output-dir /tmp
+
+          # create genesis for validators to startup
+          {{- range $user := .Values.genesis.users }}
+          user_dir="/tmp/{{ $user.name }}"
+          kubectl create secret generic {{ include "aptos-genesis.fullname" $ }}-{{ $user }}-e{{ $.Values.chain.era }} \
+            --from-file=genesis.blob=/tmp/genesis.blob \
+            --from-file=waypoint.txt=/tmp/waypoint.txt \
+            --from-file=validator-identity.yaml=${user_dir}/validator-identity.yaml \
+            --from-file=validator-full-node-identity.yaml=${user_dir}/validator-full-node-identity.yaml
+          {{- end  }}
+        resources:
+          {{- toYaml .Values.genesis.resources | nindent 10 }}
+        env:
+        - name: RUST_BACKTRACE
+          value: "1"
+        volumeMounts:
+        - name: layout
+          mountPath: /genesis
+        - name: tmp
+          mountPath: /tmp
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+      {{- with .Values.genesis }}
+      {{- with .nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 6180
+        runAsGroup: 6180
+        fsGroup: 6180
+      {{- end }}
+      volumes:
+      - name: layout
+        configMap:
+          name: {{ include "aptos-genesis.fullname" . }}-layout-e{{ .Values.chain.era }}
+      - name: tmp
+        emptyDir: {}
+      serviceAccountName: {{ include "aptos-genesis.serviceAccountName" . }}
+      {{- if .Values.imagePullSecret }}
+      imagePullSecrets:
+      - name: {{.Values.imagePullSecret}}
+      {{- end }}
