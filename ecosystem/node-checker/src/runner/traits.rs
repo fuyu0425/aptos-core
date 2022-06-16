@@ -8,7 +8,7 @@ use std::fmt::{Display, Formatter, Result as FmtResult};
 use crate::{
     metric_collector::{MetricCollector, MetricCollectorError},
     metric_evaluator::MetricsEvaluatorError,
-    public_types::CompleteEvaluation,
+    public_types::EvaluationSummary,
 };
 
 // TODO: Consider using thiserror.
@@ -64,5 +64,5 @@ pub trait Runner: Sync + Send + 'static {
     async fn run<M: MetricCollector>(
         &self,
         target_retriever: &M,
-    ) -> Result<CompleteEvaluation, RunnerError>;
+    ) -> Result<EvaluationSummary, RunnerError>;
 }

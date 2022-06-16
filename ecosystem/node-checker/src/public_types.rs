@@ -51,7 +51,7 @@ impl Example for NodeUrl {
 
 // TODO: Should I find a way to have typed actual + expected fields?
 #[derive(Clone, Debug, PoemObject)]
-pub struct Evaluation {
+pub struct EvaluationResult {
     /// Headline of the evaluation, e.g. "Healthy!" or "Metrics missing!".
     pub headline: String,
 
@@ -66,9 +66,9 @@ pub struct Evaluation {
 }
 
 #[derive(Clone, Debug, PoemObject)]
-pub struct CompleteEvaluation {
+pub struct EvaluationSummary {
     /// All the evaluations we ran.
-    pub evaluations: Vec<Evaluation>,
+    pub evaluations: Vec<EvaluationResult>,
 
     /// An aggeregated summary (method TBA).
     pub summary_score: u8,
@@ -77,9 +77,9 @@ pub struct CompleteEvaluation {
     pub summary_explanation: String,
 }
 
-impl From<Vec<Evaluation>> for CompleteEvaluation {
+impl From<Vec<EvaluationResult>> for EvaluationSummary {
     // Very basic for now, we likely want a trait for this.
-    fn from(evaluations: Vec<Evaluation>) -> Self {
+    fn from(evaluations: Vec<EvaluationResult>) -> Self {
         let summary_score = match evaluations.len() {
             0 => 0,
             _ => evaluations.iter().map(|e| e.score).sum::<u8>() / evaluations.len() as u8,
@@ -90,7 +90,7 @@ impl From<Vec<Evaluation>> for CompleteEvaluation {
             summary_score if summary_score > 50 => format!("{}: Getting there!", summary_score),
             wildcard => format!("{}: Not good enough :(", wildcard),
         };
-        CompleteEvaluation {
+        EvaluationSummary {
             evaluations,
             summary_score,
             summary_explanation,

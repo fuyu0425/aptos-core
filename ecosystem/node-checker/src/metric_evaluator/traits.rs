@@ -1,7 +1,7 @@
 // Copyright (c) Aptos
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::public_types::Evaluation;
+use crate::public_types::EvaluationResult;
 use anyhow::{Error, Result};
 use prometheus_parse::Scrape as PrometheusScrape;
 use std::fmt::{Display, Formatter, Result as FmtResult};
@@ -51,7 +51,7 @@ pub trait MetricsEvaluator: Sync + Send {
         previous_target_metrics: &PrometheusScrape,
         latest_baseline_metrics: &PrometheusScrape,
         latest_target_metrics: &PrometheusScrape,
-    ) -> Result<Vec<Evaluation>, MetricsEvaluatorError>;
+    ) -> Result<Vec<EvaluationResult>, MetricsEvaluatorError>;
 
     /// todo
     fn get_name(&self) -> String;
