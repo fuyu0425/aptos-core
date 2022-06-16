@@ -1207,21 +1207,51 @@ impl DbReader for AptosDB {
     }
 
     fn get_state_prune_window(&self) -> Result<Option<usize>> {
-        gauged_api("get_state_prune_window", || {
-            Ok(self
-                .pruner
-                .as_ref()
-                .map(|x| x.get_state_store_pruner_window() as usize))
-        })
+        if self.pruner.is_some() {
+            gauged_api("get_state_prune_window", || {
+                Ok(
+                    if self
+                        .pruner
+                        .as_ref()
+                        .unwrap()
+                        .get_state_store_pruner_window()
+                        .is_none()
+                    {
+                        None
+                    } else {
+                        self.pruner
+                            .as_ref()
+                            .map(|x| x.get_state_store_pruner_window().unwrap() as usize)
+                    },
+                )
+            })
+        } else {
+            gauged_api("get_state_prune_window", || Ok(None))
+        }
     }
 
     fn get_ledger_prune_window(&self) -> Result<Option<usize>> {
-        gauged_api("get_ledger_prune_window", || {
-            Ok(self
-                .pruner
-                .as_ref()
-                .map(|x| x.get_ledger_pruner_window() as usize))
-        })
+        if self.pruner.is_some() {
+            gauged_api("get_ledger_prune_window", || {
+                Ok(
+                    if self
+                        .pruner
+                        .as_ref()
+                        .unwrap()
+                        .get_ledger_pruner_window()
+                        .is_none()
+                    {
+                        None
+                    } else {
+                        self.pruner
+                            .as_ref()
+                            .map(|x| x.get_ledger_pruner_window().unwrap() as usize)
+                    },
+                )
+            })
+        } else {
+            gauged_api("get_ledger_prune_window", || Ok(None))
+        }
     }
 }
 
