@@ -3,7 +3,7 @@
 
 use anyhow::{Error, Result};
 use async_trait::async_trait;
-use std::fmt::{Display, Formatter, Result as FmtResult};
+use thiserror::Error as ThisError;
 
 use crate::{
     metric_collector::{MetricCollector, MetricCollectorError},
@@ -11,34 +11,24 @@ use crate::{
     public_types::EvaluationSummary,
 };
 
-// TODO: Consider using thiserror.
-
-#[derive(Debug)]
+#[derive(Debug, ThisError)]
 pub enum RunnerError {
     /// We failed to collect metrics for some reason.
+    #[error("Failed to collect metrics")]
     MetricCollectorError(MetricCollectorError),
 
     /// We couldn't parse the metrics.
+    #[error("Failed to parse metrics")]
     ParseMetricsError(Error),
 
     /// One of the evaluators failed. This is not the same as a poor score from
     /// an evaluator, this is an actual failure in the evaluation process.
+    #[error("Failed to evaluate metrics")]
     MetricEvaluatorError(MetricsEvaluatorError),
 
+    #[error("Encountered an unknown error")]
     UnknownError(Error),
 }
-
-impl Display for RunnerError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-        write!(f, "{:?}", self)
-    }
-}
-
-impl std::error::Error for RunnerError {}
-
-// TODO: When we have the metric_evaluator, include a vec of those here,
-// as well as an overall evaluation.
-struct RunnerResult {}
 
 // This runner doesn't block in the multithreading sense, but from the user
 // perspective. To run the health check, we pull metrics once, wait, and then

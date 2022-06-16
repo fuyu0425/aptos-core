@@ -4,11 +4,11 @@
 use crate::public_types::EvaluationResult;
 use anyhow::{Error, Result};
 use prometheus_parse::Scrape as PrometheusScrape;
-use std::fmt::{Display, Formatter, Result as FmtResult};
+use thiserror::Error as ThisError;
 
 // TODO: Consider using thiserror.
 
-#[derive(Debug)]
+#[derive(Debug, ThisError)]
 pub enum MetricsEvaluatorError {
     /// The metric we're evaluating is missing from the baseline. Args:
     ///   - The metric name.
@@ -17,18 +17,12 @@ pub enum MetricsEvaluatorError {
     /// indiating that something is wrong with the target node, but if the
     /// baseline node is missing a metric, it implies that something is wrong
     /// without our node checker configuration, so we return an error here.
+    #[error("A baseline metric was missing. Metric name: {0}, Explanation: {1}")]
     MissingBaselineMetric(String, String),
 
+    #[error("An unknown error occured")]
     UnknownError(Error),
 }
-
-impl Display for MetricsEvaluatorError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-        write!(f, "{:?}", self)
-    }
-}
-
-impl std::error::Error for MetricsEvaluatorError {}
 
 /// todo describe the trait
 /// todo assert these trait constraints are necessary
