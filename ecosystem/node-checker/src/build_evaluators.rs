@@ -23,10 +23,6 @@ pub fn build_evaluators(args: &Args) -> Result<Vec<Box<dyn MetricsEvaluator>>> {
         evaluators.push(Box::new(state_sync_evaluator));
     }
 
-    if evaluator_strings.is_empty() {
-        bail!("No evaluators specified");
-    }
-
     let in_use_evaluators_names = evaluators
         .iter()
         .map(|e| e.get_name())

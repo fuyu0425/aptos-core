@@ -50,8 +50,9 @@ pub struct Args {
 
     /// If this is given, the user will be able to call the check_preconfigured_node
     /// endpoint, which takes no target, instead using this as the target. If
-    /// allow_test_node_only is set, only the todo endpoint will work,
-    /// the node will not respond to health check requests for other nodes.
+    /// allow_preconfigured_test_node_only is set, only the check_preconfigured_node
+    /// endpoint will work, the tool will not respond to health check requests
+    /// for other nodes.
     #[clap(long)]
     pub target_node_url: Option<Url>,
 

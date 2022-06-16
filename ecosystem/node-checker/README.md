@@ -1,8 +1,8 @@
 # Aptos Node Health Checker
-The Aptos Node Health Checker (NHC) is the reference implementation of a node health checker for Aptos FullNodes (FN), ValidatorFullNodes (VFN), and ValidatorNodes (VN). The node health checker aims to serve 3 major user types:
+The Aptos Node Health Checker (NHC) is the reference implementation of a node health checker for Validator Nodes (Validators), Validator FullNodes (VFNs), and Public FullNodes (PFNs). The node health checker aims to serve 3 major user types:
 - **AIT Registration**: As part of sign up for the Aptos Incentivized Testnets (AIT), we request that users demonstrate that they can run a ValidatorNode successfully. We use this tool to encode precisely what that means.
-- **Operator Support**: As a node operators, you will want to know whether your node is running correctly. This service can help you figure that out. While we host our own instances of this service, we encourage node operators to run their own instances. You may choose to either run a publicly available NHC or run it as a sidecar, where it only works against your own node.
-- **Continuous Evaluation**: As part of the AITs, Aptos Labs needs a tool to help confirm that participants are running their validators in a way that meets our criteria. We run this tool continuously throughout each AIT to help us evaluate this.
+- **Operator Support**: As node operators, you will want to know whether your node is running correctly. This service can help you figure that out. While we host our own instances of this service, we encourage node operators to run their own instances. You may choose to either run a publicly available NHC or run it as a sidecar, where it only works against your own node.
+- **Continuous Evaluation**: As part of the AITs, Aptos Labs needs a tool to help confirm that participants are running their nodes in a way that meets our criteria. We run this tool continuously throughout each AIT to help us evaluate this.
 
 In this README we describe how to run NHC in each of the above configuration.
 

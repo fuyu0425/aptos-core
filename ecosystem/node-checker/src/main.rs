@@ -35,7 +35,7 @@ use url::Url;
 // decide to route the frontend to just a static hoster such as nginx.
 #[handler]
 fn root() -> String {
-    "Hello World!".to_string()
+    "TODO: Under construction!".to_string()
 }
 
 struct Api<M: MetricCollector, R: Runner> {
