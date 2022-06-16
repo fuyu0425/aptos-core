@@ -7,24 +7,22 @@ use prometheus_parse::{Scrape as PrometheusScrape, Value as PrometheusValue};
 pub fn get_metric_value(
     metrics: &PrometheusScrape,
     metric_name: &str,
-    label_key: &str,
-    label_value: &str,
+    expected_label_key: &str,
+    expected_label_value: &str,
 ) -> Option<u64> {
-    for s in &metrics.samples {
-        if s.metric == metric_name {
-            let lv = s.labels.get(label_key);
-            if lv.is_none() {
-                continue;
-            }
-            if lv.unwrap() != label_value {
-                continue;
-            }
-            match &s.value {
-                PrometheusValue::Counter(v) => return Some(v.round() as u64),
-                PrometheusValue::Gauge(v) => return Some(v.round() as u64),
-                PrometheusValue::Untyped(v) => return Some(v.round() as u64),
-                wildcard => {
-                    warn!("Found unexpected metric type: {:?}", wildcard);
+    for sample in &metrics.samples {
+        if sample.metric == metric_name {
+            let label_value = sample.labels.get(expected_label_key);
+            if let Some(label_value) = label_value {
+                if label_value == expected_label_value {
+                    match &sample.value {
+                        PrometheusValue::Counter(v) => return Some(v.round() as u64),
+                        PrometheusValue::Gauge(v) => return Some(v.round() as u64),
+                        PrometheusValue::Untyped(v) => return Some(v.round() as u64),
+                        wildcard => {
+                            warn!("Found unexpected metric type: {:?}", wildcard);
+                        }
+                    }
                 }
             }
         }
