@@ -32,7 +32,7 @@ metadata:
     app.kubernetes.io/name: fullnode-{{$i}}
     group: {{ .name }}
 spec:
-  serviceName: {{ include "aptos-validator.fullname" $ }}-{{ .name }}
+  serviceName: {{ include "aptos-validator.fullname" $ }}-{{$i}}-{{ .name }}
   replicas: {{ .replicas }}
   podManagementPolicy: Parallel
   selector:
@@ -135,7 +135,7 @@ spec:
           name: {{ include "aptos-validator.fullname" $ }}-{{$i}}
       - name: genesis-config
         secret:
-          secretName: {{ include "aptos-validator.fullname" $ }}-genesis-e{{ $.Values.chain.era }}
+          secretName: {{ include "aptos-validator.fullname" $ }}-{{$i}}-genesis-e{{ $.Values.chain.era }}
       serviceAccountName: {{ include "aptos-validator.fullname" $ }}-fullnode
       {{- if $.Values.imagePullSecret }}
       imagePullSecrets:

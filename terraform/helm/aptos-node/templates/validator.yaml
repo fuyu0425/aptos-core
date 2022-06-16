@@ -140,7 +140,7 @@ spec:
           name: {{ include "aptos-validator.fullname" $ }}-{{$i}}
       - name: genesis-config
         secret:
-          secretName: {{ include "aptos-validator.fullname" $ }}-genesis-e{{ $.Values.chain.era }}
+          secretName: {{ include "aptos-validator.fullname" $ }}-{{$i}}-genesis-e{{ $.Values.chain.era }}
       - name: aptos-data
         persistentVolumeClaim:
           claimName: {{ include "aptos-validator.fullname" $ }}-{{$i}}-validator-e{{ $.Values.chain.era }}

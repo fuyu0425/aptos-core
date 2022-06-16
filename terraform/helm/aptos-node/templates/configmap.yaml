@@ -1,6 +1,8 @@
 # TODO(rustielin): make option to specify node config for each validator/fullnode
 {{- range $i, $e := until (int .Values.numValidators) }}
 ---
+# make the validator index available in tpl using $.Values.i 
+{{ $_ := set $.Values "i" $i }}
 apiVersion: v1
 kind: ConfigMap
 metadata:

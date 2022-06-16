@@ -1,29 +1,38 @@
+{{- range $i, $e := until (int .Values.numValidators) }}
+---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ include "aptos-validator.fullname" . }}-validator
+  name: {{ include "aptos-validator.fullname" $ }}-{{$i}}-validator
   labels:
-    {{- include "aptos-validator.labels" . | nindent 4 }}
+    {{- include "aptos-validator.labels" $ | nindent 4 }}
 spec:
   podSelector:
     matchLabels:
-      {{- include "aptos-validator.selectorLabels" . | nindent 6 }}
-      app.kubernetes.io/name: validator
+      {{- include "aptos-validator.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/name: validator-{{$i}}
   policyTypes:
   - Ingress
   - Egress
   ingress:
-  # AptosNet from HAproxy
+  # HAproxy
   - from:
     - podSelector:
         matchLabels:
-          {{- include "aptos-validator.selectorLabels" . | nindent 10 }}
-          app.kubernetes.io/name: haproxy
+          {{- include "aptos-validator.selectorLabels" $ | nindent 10 }}
+          app.kubernetes.io/name: haproxy-{{$i}}
     ports:
+      # AptosNet from HAproxy
     - protocol: TCP
       port: 6180
     - protocol: TCP
       port: 9101
+  {{- if $.Values.validator.exposeRestApi }}
+      # REST API from HAproxy
+    - protocol: TCP
+      port: 8080
+  {{- end }}
+  # Monitoring metrics port
   - from:
     - podSelector:
         matchLabels:
@@ -31,17 +40,13 @@ spec:
     ports:
     - protocol: TCP
       port: 9101
-  {{- if .Values.validator.exposeRestApi }}
-  # REST API from HAproxy
-    - protocol: TCP
-      port: 8080
-  {{- end }}
+
   # AptosNet from local full nodes
   - from:
     - podSelector:
         matchLabels:
-          {{- include "aptos-validator.selectorLabels" . | nindent 10 }}
-          app.kubernetes.io/name: fullnode
+          {{- include "aptos-validator.selectorLabels" $ | nindent 10 }}
+          app.kubernetes.io/name: fullnode-{{$i}}
     ports:
     - protocol: TCP
       port: 6181
@@ -64,4 +69,4 @@ spec:
   - ports:
     - protocol: TCP
       port: 5044
-
+{{- end }}

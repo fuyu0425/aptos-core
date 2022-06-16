@@ -174,7 +174,7 @@ spec:
       volumes:
       - name: haproxy-config
         configMap:
-          name: {{ include "aptos-validator.fullname" $ }}-haproxy
+          name: {{ include "aptos-validator.fullname" $ }}-{{$i}}-haproxy
       {{- if $.Values.haproxy.tls_secret }}
       - name: haproxy-tls
         secret:
