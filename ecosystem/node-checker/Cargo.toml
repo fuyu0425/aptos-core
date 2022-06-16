@@ -1,5 +1,5 @@
 [package]
-name = "aptos-node-checker"
+name = "aptos-node-health-checker"
 version = "0.1.0"
 description = "Aptos Node Health Checker"
 authors = ["Aptos Labs <opensource@aptoslabs.com>"]
@@ -18,16 +18,13 @@ futures = "0.3.21"
 humantime = "2.1.0"
 log = "0.4"
 once_cell = "1.10.0"
-poem = { git = "https://github.com/poem-web/poem", features = ["anyhow"], rev = "67cfa24f999d30d5008faaf604e64ad1b282179f" }
-poem-openapi = { git = "https://github.com/poem-web/poem", features = ["swagger-ui"], rev = "67cfa24f999d30d5008faaf604e64ad1b282179f" }
+poem = { git = "https://github.com/poem-web/poem", features = ["anyhow"], rev = "47232f235a50b48df424e60de8df49dccfe6ee78" }
+poem-openapi = { git = "https://github.com/poem-web/poem", features = ["swagger-ui"], rev = "47232f235a50b48df424e60de8df49dccfe6ee78" }
 prometheus-parse = "0.2.2"
 reqwest = "0.11.10"
 thiserror = "1.0.31"
 tokio = { version = "1.18.2", features = ["full"] }
 url = "2.2.2"
-# These deps are commented out while I wait for some PRs I made to get deployed.
-# poem = "1.3.30"
-# poem-openapi = { version = "2.0.0", features = ["swagger-ui"]}
 
 aptos-logger = { path = "../../crates/aptos-logger" }
 aptos-metrics = { path = "../../crates/aptos-metrics" }
@@ -35,4 +32,4 @@ aptos-rest-client = { path = "../../crates/aptos-rest-client" }
 aptos-workspace-hack = { path = "../../crates/aptos-workspace-hack" }
 
 [[bin]]
-name = "aptos-node-checker"
+name = "aptos-node-health-checker"
