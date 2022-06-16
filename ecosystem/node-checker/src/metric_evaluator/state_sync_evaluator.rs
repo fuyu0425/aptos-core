@@ -59,49 +59,53 @@ impl StateSyncMetricsEvaluator {
     ) -> EvaluationResult {
         // We convert to i64 to avoid potential overflow if somehow the state sync version went backwards.
         let target_progress = latest_target_version as i64 - previous_target_version as i64;
-        if target_progress == 0 {
-            EvaluationResult {
+        match target_progress {
+            target_progress if (target_progress == 0) => {
+                EvaluationResult {
                   headline: "State sync version is not progressing".to_string(),
                   score: 50,
                   explanation: "Successfully pulled metrics from target node twice, but the metrics aren't progressing.".to_string(),
                   source: self.get_name(),
               }
-        } else if target_progress < 0 {
-            EvaluationResult {
-                  headline: "State sync version went backwards!".to_string(),
-                  score: 0,
-                  explanation: "Successfully pulled metrics from target node twice, but the second time the state sync version went backwards!".to_string(),
-                  source: self.get_name(),
-              }
-        } else {
-            // We convert to i64 to avoid potential overflow if the target is ahead of the baseline.
-            let delta_from_baseline = latest_baseline_version as i64 - latest_target_version as i64;
-            if delta_from_baseline > self.args.version_delta_tolerance as i64 {
+            }
+            target_progress if (target_progress < 0) => {
                 EvaluationResult {
-                      headline: "State sync version is lagging".to_string(),
-                      score: 70,
-                      explanation: format!(
-                          "Successfully pulled metrics from target node twice and saw the \
-                          version was progressing, but it is lagging {} versions behind the baseline node. \
-                          Target version: {}. Baseline version: {}. Tolerance: {}.",
-                          delta_from_baseline, latest_target_version, latest_baseline_version, self.args.version_delta_tolerance
-                      ),
-                      source: self.get_name(),
-                  }
-            } else {
-                EvaluationResult {
-                    headline: "State sync version is within tolerance".to_string(),
-                    score: 100,
-                    explanation: format!(
-                        "Successfully pulled metrics from target node twice, saw the \
-                          version was progressing, and saw that it is within tolerance \
-                          of the baseline node. \
-                          Target version: {}. Baseline version: {}. Tolerance: {}.",
-                        latest_target_version,
-                        latest_baseline_version,
-                        self.args.version_delta_tolerance
-                    ),
+                    headline: "State sync version went backwards!".to_string(),
+                    score: 0,
+                    explanation: "Successfully pulled metrics from target node twice, but the second time the state sync version went backwards!".to_string(),
                     source: self.get_name(),
+                }
+            }
+            wildcard => {
+                // We convert to i64 to avoid potential overflow if the target is ahead of the baseline.
+                let delta_from_baseline = latest_baseline_version as i64 - latest_target_version as i64;
+                if delta_from_baseline > self.args.version_delta_tolerance as i64 {
+                    EvaluationResult {
+                        headline: "State sync version is lagging".to_string(),
+                        score: 70,
+                        explanation: format!(
+                            "Successfully pulled metrics from target node twice and saw the \
+                            version was progressing, but it is lagging {} versions behind the baseline node. \
+                            Target version: {}. Baseline version: {}. Tolerance: {}.",
+                            delta_from_baseline, latest_target_version, latest_baseline_version, self.args.version_delta_tolerance
+                        ),
+                        source: self.get_name(),
+                    }
+                } else {
+                    EvaluationResult {
+                        headline: "State sync version is within tolerance".to_string(),
+                        score: 100,
+                        explanation: format!(
+                            "Successfully pulled metrics from target node twice, saw the \
+                            version was progressing, and saw that it is within tolerance \
+                            of the baseline node. \
+                            Target version: {}. Baseline version: {}. Tolerance: {}.",
+                            latest_target_version,
+                            latest_baseline_version,
+                            self.args.version_delta_tolerance
+                        ),
+                        source: self.get_name(),
+                    }
                 }
             }
         }
@@ -131,8 +135,7 @@ impl MetricsEvaluator for StateSyncMetricsEvaluator {
         // Get the latest version from the target node.
         let latest_target_version = self.get_sync_version(latest_target_metrics);
 
-        if let Some(evaluation) = self.evaluate_version_presence(&latest_target_version, "second")
-        {
+        if let Some(evaluation) = self.evaluate_version_presence(&latest_target_version, "second") {
             evaluations.push(evaluation);
         }
 
@@ -213,10 +216,11 @@ mod test {
             )
             .expect("Failed to evaluate metrics");
 
-        let expected_evaluations_len = match omit_previous_target_metric && omit_latest_target_metric {
-            true => 2,
-            false => 1,
-        };
+        let expected_evaluations_len =
+            match omit_previous_target_metric && omit_latest_target_metric {
+                true => 2,
+                false => 1,
+            };
 
         assert_eq!(evaluations.len(), expected_evaluations_len);
         assert_eq!(evaluations[0].score, expected_score);

@@ -3,7 +3,8 @@
 
 use super::{Runner, RunnerError};
 use crate::{
-    metric_collector::{MetricCollector, self}, metric_evaluator::{MetricsEvaluator, parse_metrics},
+    metric_collector::{self, MetricCollector},
+    metric_evaluator::{parse_metrics, MetricsEvaluator},
     public_types::EvaluationSummary,
 };
 use anyhow::{Context, Result};
@@ -41,10 +42,14 @@ impl<M: MetricCollector> BlockingRunner<M> {
     }
 
     fn parse_response(&self, lines: Vec<String>) -> Result<PrometheusScrape, RunnerError> {
-        parse_metrics(lines).context("Failed to parse metrics response").map_err(RunnerError::ParseMetricsError)
+        parse_metrics(lines)
+            .context("Failed to parse metrics response")
+            .map_err(RunnerError::ParseMetricsError)
     }
 
-    async fn collect_metrics<MC: MetricCollector>(metric_collector: &MC) -> Result<Vec<String>, RunnerError> {
+    async fn collect_metrics<MC: MetricCollector>(
+        metric_collector: &MC,
+    ) -> Result<Vec<String>, RunnerError> {
         metric_collector
             .collect_metrics()
             .await
@@ -79,7 +84,8 @@ impl<M: MetricCollector> Runner for BlockingRunner<M> {
         tokio::time::sleep(self.args.metrics_fetch_delay).await;
 
         debug!("Collecting second round of baseline metrics");
-        let second_baseline_metrics = Self::collect_metrics(&self.baseline_metric_collector).await?;
+        let second_baseline_metrics =
+            Self::collect_metrics(&self.baseline_metric_collector).await?;
 
         debug!("Collecting second round of target metrics");
         let second_target_metrics = Self::collect_metrics(target_collector).await?;
@@ -98,7 +104,7 @@ impl<M: MetricCollector> Runner for BlockingRunner<M> {
                     &second_target_metrics,
                 )
                 .map_err(RunnerError::MetricEvaluatorError)?;
-                evaluation_results.append(&mut es);
+            evaluation_results.append(&mut es);
         }
 
         let complete_evaluation = EvaluationSummary::from(evaluation_results);

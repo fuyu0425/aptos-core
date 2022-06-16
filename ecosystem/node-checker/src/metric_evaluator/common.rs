@@ -31,7 +31,6 @@ pub fn get_metric_value(
     None
 }
 
-
 pub fn parse_metrics(metrics: Vec<String>) -> Result<PrometheusScrape> {
     PrometheusScrape::parse(metrics.iter().map(|l| Ok(l.to_string()))).map_err(|e| anyhow!(e))
 }
