@@ -9,6 +9,7 @@ tags: []
 paths:
   /check_node:
     get:
+<<<<<<< HEAD
       summary: "Check the health of a given target node. You may specify a baseline node configuration to use for the evaluation. If you don't specify a baseline node configuration, we will attempt to determine the appropriate baseline based on your target node."
       parameters:
         - name: node_url
@@ -50,6 +51,15 @@ paths:
           in: query
           required: false
           deprecated: false
+=======
+      summary: "Check the health of a given target node. You may sepcify a baseline node configuration\ntype to use for the evaluation. If you don't specify a baseline node configuration, we\nwill attempt to determine the appropriate baseline based on your target node."
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckNodeRequest"
+        required: true
+>>>>>>> 0b1179325 (Update the openapi specs)
       responses:
         "200":
           description: ""
@@ -59,6 +69,7 @@ paths:
                 $ref: "#/components/schemas/EvaluationSummary"
   /check_preconfigured_node:
     get:
+<<<<<<< HEAD
       summary: "Check the health of the preconfigured node. If none was specified when this instance of the node checker was started, this will return an error. You may specify a baseline node configuration to use for the evaluation. If you don't specify a baseline node configuration, we will attempt to determine the appropriate baseline based on your target node."
       parameters:
         - name: baseline_configuration_name
@@ -67,6 +78,15 @@ paths:
           in: query
           required: false
           deprecated: false
+=======
+      summary: "Check the health of the preconfigured node. If none was specified when the node health\nchecker was started, this will return an error."
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+        required: true
+>>>>>>> 0b1179325 (Update the openapi specs)
       responses:
         "200":
           description: ""
@@ -76,6 +96,25 @@ paths:
                 $ref: "#/components/schemas/EvaluationSummary"
 components:
   schemas:
+<<<<<<< HEAD
+=======
+    CheckNodeRequest:
+      type: object
+      required:
+        - target_node
+      properties:
+        target_node:
+          $ref: "#/components/schemas/NodeAddress"
+        baseline_configuration_name:
+          type: string
+      example:
+        target_node:
+          url: "http://mynode.mysite.com/"
+          metrics_port: 9101
+          api_port: 8080
+          noise_port: 6180
+        baseline_configuration_name: Devnet Full Node
+>>>>>>> 0b1179325 (Update the openapi specs)
     EvaluationResult:
       type: object
       required:
@@ -104,6 +143,28 @@ components:
           items:
             type: string
     EvaluationSummary:
+<<<<<<< HEAD
+=======
+      type: object
+      required:
+        - evaluations
+        - summary_score
+        - summary_explanation
+      properties:
+        evaluations:
+          type: array
+          description: All the evaluations we ran.
+          items:
+            $ref: "#/components/schemas/EvaluationResult"
+        summary_score:
+          type: integer
+          format: uint8
+          description: An aggeregated summary (method TBA).
+        summary_explanation:
+          type: string
+          description: An overall explanation of the results.
+    NodeAddress:
+>>>>>>> 0b1179325 (Update the openapi specs)
       type: object
       required:
         - evaluation_results
@@ -121,4 +182,29 @@ components:
           description: An aggeregated summary (method TBA).
         summary_explanation:
           type: string
+<<<<<<< HEAD
           description: An overall explanation of the results.
+=======
+          format: url
+          description: "Target URL. This should include a scheme (e.g. http://). If there is\nno scheme, we will prepend http://."
+        metrics_port:
+          type: integer
+          format: uint16
+          description: Metrics port.
+          default: 9101
+        api_port:
+          type: integer
+          format: uint16
+          description: API port.
+          default: 8080
+        noise_port:
+          type: integer
+          format: uint16
+          description: Validator communication port.
+          default: 6180
+      example:
+        url: "http://mynode.mysite.com/"
+        metrics_port: 9101
+        api_port: 8080
+        noise_port: 6180
+>>>>>>> 0b1179325 (Update the openapi specs)

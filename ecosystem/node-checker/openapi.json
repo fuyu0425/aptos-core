@@ -115,6 +115,32 @@
   },
   "components": {
     "schemas": {
+<<<<<<< HEAD
+=======
+      "CheckNodeRequest": {
+        "type": "object",
+        "required": [
+          "target_node"
+        ],
+        "properties": {
+          "target_node": {
+            "$ref": "#/components/schemas/NodeAddress"
+          },
+          "baseline_configuration_name": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "target_node": {
+            "url": "http://mynode.mysite.com/",
+            "metrics_port": 9101,
+            "api_port": 8080,
+            "noise_port": 6180
+          },
+          "baseline_configuration_name": "Devnet Full Node"
+        }
+      },
+>>>>>>> 0b1179325 (Update the openapi specs)
       "EvaluationResult": {
         "type": "object",
         "required": [
@@ -152,6 +178,35 @@
         }
       },
       "EvaluationSummary": {
+<<<<<<< HEAD
+=======
+        "type": "object",
+        "required": [
+          "evaluations",
+          "summary_score",
+          "summary_explanation"
+        ],
+        "properties": {
+          "evaluations": {
+            "type": "array",
+            "description": "All the evaluations we ran.",
+            "items": {
+              "$ref": "#/components/schemas/EvaluationResult"
+            }
+          },
+          "summary_score": {
+            "type": "integer",
+            "format": "uint8",
+            "description": "An aggeregated summary (method TBA)."
+          },
+          "summary_explanation": {
+            "type": "string",
+            "description": "An overall explanation of the results."
+          }
+        }
+      },
+      "NodeAddress": {
+>>>>>>> 0b1179325 (Update the openapi specs)
         "type": "object",
         "required": [
           "evaluation_results",
@@ -173,8 +228,38 @@
           },
           "summary_explanation": {
             "type": "string",
+<<<<<<< HEAD
             "description": "An overall explanation of the results."
           }
+=======
+            "format": "url",
+            "description": "Target URL. This should include a scheme (e.g. http://). If there is\nno scheme, we will prepend http://."
+          },
+          "metrics_port": {
+            "type": "integer",
+            "format": "uint16",
+            "description": "Metrics port.",
+            "default": 9101
+          },
+          "api_port": {
+            "type": "integer",
+            "format": "uint16",
+            "description": "API port.",
+            "default": 8080
+          },
+          "noise_port": {
+            "type": "integer",
+            "format": "uint16",
+            "description": "Validator communication port.",
+            "default": 6180
+          }
+        },
+        "example": {
+          "url": "http://mynode.mysite.com/",
+          "metrics_port": 9101,
+          "api_port": 8080,
+          "noise_port": 6180
+>>>>>>> 0b1179325 (Update the openapi specs)
         }
       }
     }
