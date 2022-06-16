@@ -63,6 +63,6 @@ pub trait Runner: Sync + Send + 'static {
     // TODO: add proper result type.
     async fn run<M: MetricCollector>(
         &self,
-        target_retriever: &M,
+        target_collector: &M,
     ) -> Result<EvaluationSummary, RunnerError>;
 }

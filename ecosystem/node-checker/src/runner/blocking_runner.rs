@@ -3,7 +3,7 @@
 
 use super::{Runner, RunnerError};
 use crate::{
-    metric_collector::MetricCollector, metric_evaluator::{MetricsEvaluator, parse_metrics},
+    metric_collector::{MetricCollector, self}, metric_evaluator::{MetricsEvaluator, parse_metrics},
     public_types::EvaluationSummary,
 };
 use anyhow::{Context, Result};
@@ -43,6 +43,13 @@ impl<M: MetricCollector> BlockingRunner<M> {
     fn parse_response(&self, lines: Vec<String>) -> Result<PrometheusScrape, RunnerError> {
         parse_metrics(lines).context("Failed to parse metrics response").map_err(RunnerError::ParseMetricsError)
     }
+
+    async fn collect_metrics<MC: MetricCollector>(metric_collector: &MC) -> Result<Vec<String>, RunnerError> {
+        metric_collector
+            .collect_metrics()
+            .await
+            .map_err(RunnerError::MetricCollectorError)
+    }
 }
 
 // todo, we need to collect the target metrics first and then collect the baseline metrics
@@ -54,7 +61,7 @@ impl<M: MetricCollector> BlockingRunner<M> {
 impl<M: MetricCollector> Runner for BlockingRunner<M> {
     async fn run<T: MetricCollector>(
         &self,
-        target_retriever: &T,
+        target_collector: &T,
     ) -> Result<EvaluationSummary, RunnerError> {
         debug!("Collecting first round of baseline metrics");
         let first_baseline_metrics = self
@@ -64,10 +71,7 @@ impl<M: MetricCollector> Runner for BlockingRunner<M> {
             .map_err(RunnerError::MetricCollectorError)?;
 
         debug!("Collecting first round of target metrics");
-        let first_target_metrics = target_retriever
-            .collect_metrics()
-            .await
-            .map_err(RunnerError::MetricCollectorError)?;
+        let first_target_metrics = Self::collect_metrics(target_collector).await?;
 
         let first_baseline_metrics = self.parse_response(first_baseline_metrics)?;
         let first_target_metrics = self.parse_response(first_target_metrics)?;
@@ -75,17 +79,10 @@ impl<M: MetricCollector> Runner for BlockingRunner<M> {
         tokio::time::sleep(self.args.metrics_fetch_delay).await;
 
         debug!("Collecting second round of baseline metrics");
-        let second_baseline_metrics = self
-            .baseline_metric_collector
-            .collect_metrics()
-            .await
-            .map_err(RunnerError::MetricCollectorError)?;
+        let second_baseline_metrics = Self::collect_metrics(&self.baseline_metric_collector).await?;
 
         debug!("Collecting second round of target metrics");
-        let second_target_metrics = target_retriever
-            .collect_metrics()
-            .await
-            .map_err(RunnerError::MetricCollectorError)?;
+        let second_target_metrics = Self::collect_metrics(target_collector).await?;
 
         let second_baseline_metrics = self.parse_response(second_baseline_metrics)?;
         let second_target_metrics = self.parse_response(second_target_metrics)?;
