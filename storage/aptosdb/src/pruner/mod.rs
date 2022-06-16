@@ -54,8 +54,8 @@ pub(crate) struct Pruner {
     #[allow(dead_code)]
     min_readable_version: Arc<Mutex<Vec<Version>>>,
     /// We send a batch of version to the underlying pruners for performance reason. This tracks the
-    /// last version we sent to the pruner.
-    last_version_sent_to_pruners: Arc<Mutex<Version>>,
+    /// last version we sent to the pruners. If both of the pruners are disabled (i.e. state_store_prune_window and  ledger_prune_window are None,) this value will be None. Otherwise, this value represents the last version we sent to either the state_store_pruner or the ledger_pruner or both.
+    last_version_sent_to_pruners: Option<Arc<Mutex<Version>>>,
     /// Ideal batch size of the versions to be sent to the pruner
     pruning_batch_size: usize,
     /// latest version
@@ -108,7 +108,15 @@ impl Pruner {
             worker_thread: Some(worker_thread),
             command_sender: Mutex::new(command_sender),
             min_readable_version: worker_progress_clone,
-            last_version_sent_to_pruners: Arc::new(Mutex::new(0)),
+            last_version_sent_to_pruners: if storage_pruner_config
+                .state_store_prune_window
+                .is_some()
+                || storage_pruner_config.ledger_prune_window.is_some()
+            {
+                Some(Arc::new(Mutex::new(0)))
+            } else {
+                None
+            },
             pruning_batch_size: storage_pruner_config.pruning_batch_size,
             latest_version: Arc::new(Mutex::new(0)),
         }
@@ -131,12 +139,16 @@ impl Pruner {
     }
     /// Sends pruning command to the worker thread when necessary.
     pub fn maybe_wake_pruner(&self, latest_version: Version) {
+        if self.last_version_sent_to_pruners.is_none() {
+            return;
+        }
         *self.latest_version.lock() = latest_version;
         if latest_version
-            >= *self.last_version_sent_to_pruners.lock() + self.pruning_batch_size as u64
+            >= *self.last_version_sent_to_pruners.as_ref().unwrap().lock()
+                + self.pruning_batch_size as u64
         {
             self.wake_pruner(latest_version);
-            *self.last_version_sent_to_pruners.lock() = latest_version;
+            *self.last_version_sent_to_pruners.as_ref().unwrap().lock() = latest_version;
         }
     }
 
@@ -144,11 +156,16 @@ impl Pruner {
         let mut prune_window_vector = Vec::new();
         if self.state_store_prune_window.is_some() {
             prune_window_vector
-                .push(latest_version.saturating_sub(self.state_store_prune_window.unwrap()));
+                .push(Some(latest_version.saturating_sub(self.state_store_prune_window.unwrap())));
+        } else {
+            prune_window_vector.push(None);
         }
 
         if self.ledger_prune_window.is_some() {
-            prune_window_vector.push(self.ledger_prune_window.unwrap());
+            prune_window_vector
+                .push(Some(latest_version.saturating_sub(self.ledger_prune_window.unwrap())));
+        } else {
+            prune_window_vector.push(None);
         }
 
         self.command_sender
@@ -171,14 +188,16 @@ impl Pruner {
             thread::sleep,
             time::{Duration, Instant},
         };
-
         self.maybe_wake_pruner(latest_version);
 
-        if self.state_store_prune_window.is_some()
-            && latest_version > self.state_store_prune_window.unwrap()
+        if (self.state_store_prune_window.is_some()
+            && latest_version > self.state_store_prune_window.unwrap())
+            || (self.ledger_prune_window.is_some()
+                && latest_version > self.ledger_prune_window.unwrap())
         {
             let min_readable_state_store_version =
-                latest_version - self.state_store_prune_window.unwrap();
+                latest_version - self.state_store_prune_window.unwrap_or(0);
+
             // Assuming no big pruning chunks will be issued by a test.
             const TIMEOUT: Duration = Duration::from_secs(10);
             let end = Instant::now() + TIMEOUT;
@@ -192,6 +211,46 @@ impl Pruner {
                 sleep(Duration::from_millis(1));
             }
             anyhow::bail!("Timeout waiting for pruner worker.");
+        }
+        Ok(())
+    }
+
+    /// (For tests only.) Notifies the worker thread and waits for it to finish its job by polling
+    /// an internal counter.
+    #[cfg(test)]
+    pub fn wait_and_ensure_disabled(
+        &self,
+        latest_version: Version,
+        pruner_index: usize,
+    ) -> anyhow::Result<()> {
+        use std::{
+            thread::sleep,
+            time::{Duration, Instant},
+        };
+        self.maybe_wake_pruner(latest_version);
+
+        if (self.state_store_prune_window.is_some()
+            && latest_version > self.state_store_prune_window.unwrap())
+            || (self.ledger_prune_window.is_some()
+                && latest_version > self.ledger_prune_window.unwrap())
+        {
+            let min_readable_state_store_version =
+                latest_version - self.state_store_prune_window.unwrap_or(0);
+
+            // Assuming no big pruning chunks will be issued by a test.
+            const TIMEOUT: Duration = Duration::from_secs(10);
+            let end = Instant::now() + TIMEOUT;
+
+            while Instant::now() < end {
+                if *self.min_readable_version.lock().get(pruner_index).unwrap()
+                    > min_readable_state_store_version
+                {
+                    anyhow::bail!(
+                        "min_readable_version should not change if the pruner is disabled"
+                    );
+                }
+                sleep(Duration::from_millis(1));
+            }
         }
         Ok(())
     }

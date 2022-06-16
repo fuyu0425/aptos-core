@@ -114,12 +114,15 @@ impl Worker {
                     for (new_target_version, pruner) in
                         zip_eq(&target_db_versions, &self.db_pruners)
                     {
-                        if *new_target_version > pruner.lock().target_version() {
+                        if new_target_version.is_none() {
+                            continue;
+                        }
+                        if new_target_version.unwrap() > pruner.lock().target_version() {
                             // Switch to non-blocking to allow some work to be done after the
                             // channel has drained.
                             self.blocking_recv = false;
                         }
-                        pruner.lock().set_target_version(*new_target_version);
+                        pruner.lock().set_target_version(new_target_version.unwrap());
                     }
                 }
             }
@@ -129,5 +132,5 @@ impl Worker {
 
 pub enum Command {
     Quit,
-    Prune { target_db_versions: Vec<Version> },
+    Prune { target_db_versions: Vec<Option<Version>> },
 }
