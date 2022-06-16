@@ -3,7 +3,7 @@
 
 use super::{Runner, RunnerError};
 use crate::{
-    metric_collector::MetricCollector, metric_evaluator::MetricsEvaluator,
+    metric_collector::MetricCollector, metric_evaluator::{MetricsEvaluator, parse_metrics},
     public_types::CompleteEvaluation,
 };
 use anyhow::{Context, Result};
@@ -41,9 +41,7 @@ impl<M: MetricCollector> BlockingRunner<M> {
     }
 
     fn parse_response(&self, lines: Vec<String>) -> Result<PrometheusScrape, RunnerError> {
-        PrometheusScrape::parse(lines.into_iter().map(Ok))
-            .context("Failed to parse metrics response")
-            .map_err(RunnerError::ParseMetricsError)
+        parse_metrics(lines).context("Failed to parse metrics response").map_err(RunnerError::ParseMetricsError)
     }
 }
 

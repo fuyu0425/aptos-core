@@ -1,6 +1,7 @@
 // Copyright (c) Aptos
 // SPDX-License-Identifier: Apache-2.0
 
+use anyhow::{anyhow, Result};
 use log::warn;
 use prometheus_parse::{Scrape as PrometheusScrape, Value as PrometheusValue};
 
@@ -28,4 +29,9 @@ pub fn get_metric_value(
         }
     }
     None
+}
+
+
+pub fn parse_metrics(metrics: Vec<String>) -> Result<PrometheusScrape> {
+    PrometheusScrape::parse(metrics.iter().map(|l| Ok(l.to_string()))).map_err(|e| anyhow!(e))
 }
