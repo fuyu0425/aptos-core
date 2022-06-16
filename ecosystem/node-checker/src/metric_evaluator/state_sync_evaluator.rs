@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::{common::get_metric_value, MetricsEvaluator, MetricsEvaluatorError};
-use crate::public_types::Evaluation;
+use crate::public_types::EvaluationResult;
 use anyhow::Result;
 use clap::Parser;
 use log::debug;
@@ -39,10 +39,10 @@ impl StateSyncMetricsEvaluator {
         &self,
         version: &Option<u64>,
         metrics_round: &str,
-    ) -> Option<Evaluation> {
+    ) -> Option<EvaluationResult> {
         match version {
             Some(v) => None,
-            None => Some(Evaluation {
+            None => Some(EvaluationResult {
                 headline: "State sync version metric missing".to_string(),
                 score: 0,
                 explanation: format!("The {} set of metrics from the target node is missing the state sync metric: {}", metrics_round, STATE_SYNC_METRIC),
@@ -56,18 +56,18 @@ impl StateSyncMetricsEvaluator {
         previous_target_version: u64,
         latest_target_version: u64,
         latest_baseline_version: u64,
-    ) -> Evaluation {
+    ) -> EvaluationResult {
         // We convert to i64 to avoid potential overflow if somehow the state sync version went backwards.
         let target_progress = latest_target_version as i64 - previous_target_version as i64;
         if target_progress == 0 {
-            Evaluation {
+            EvaluationResult {
                   headline: "State sync version is not progressing".to_string(),
                   score: 50,
                   explanation: "Successfully pulled metrics from target node twice, but the metrics aren't progressing.".to_string(),
                   source: self.get_name(),
               }
         } else if target_progress < 0 {
-            Evaluation {
+            EvaluationResult {
                   headline: "State sync version went backwards!".to_string(),
                   score: 0,
                   explanation: "Successfully pulled metrics from target node twice, but the second time the state sync version went backwards!".to_string(),
@@ -77,7 +77,7 @@ impl StateSyncMetricsEvaluator {
             // We convert to i64 to avoid potential overflow if the target is ahead of the baseline.
             let delta_from_baseline = latest_baseline_version as i64 - latest_target_version as i64;
             if delta_from_baseline > self.args.version_delta_tolerance as i64 {
-                Evaluation {
+                EvaluationResult {
                       headline: "State sync version is lagging".to_string(),
                       score: 70,
                       explanation: format!(
@@ -89,7 +89,7 @@ impl StateSyncMetricsEvaluator {
                       source: self.get_name(),
                   }
             } else {
-                Evaluation {
+                EvaluationResult {
                     headline: "State sync version is within tolerance".to_string(),
                     score: 100,
                     explanation: format!(
@@ -117,7 +117,7 @@ impl MetricsEvaluator for StateSyncMetricsEvaluator {
         previous_target_metrics: &PrometheusScrape,
         latest_baseline_metrics: &PrometheusScrape,
         latest_target_metrics: &PrometheusScrape,
-    ) -> Result<Vec<Evaluation>, MetricsEvaluatorError> {
+    ) -> Result<Vec<EvaluationResult>, MetricsEvaluatorError> {
         let mut evaluations = vec![];
 
         // Get previous version from the target node.

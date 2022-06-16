@@ -4,7 +4,7 @@
 use super::{Runner, RunnerError};
 use crate::{
     metric_collector::MetricCollector, metric_evaluator::{MetricsEvaluator, parse_metrics},
-    public_types::CompleteEvaluation,
+    public_types::EvaluationSummary,
 };
 use anyhow::{Context, Result};
 use async_trait::async_trait;
@@ -55,7 +55,7 @@ impl<M: MetricCollector> Runner for BlockingRunner<M> {
     async fn run<T: MetricCollector>(
         &self,
         target_retriever: &T,
-    ) -> Result<CompleteEvaluation, RunnerError> {
+    ) -> Result<EvaluationSummary, RunnerError> {
         debug!("Collecting first round of baseline metrics");
         let first_baseline_metrics = self
             .baseline_metric_collector
@@ -90,7 +90,7 @@ impl<M: MetricCollector> Runner for BlockingRunner<M> {
         let second_baseline_metrics = self.parse_response(second_baseline_metrics)?;
         let second_target_metrics = self.parse_response(second_target_metrics)?;
 
-        let mut evaluations = Vec::new();
+        let mut evaluation_results = Vec::new();
 
         for evaluator in &self.evaluators {
             let mut es = evaluator
@@ -101,10 +101,10 @@ impl<M: MetricCollector> Runner for BlockingRunner<M> {
                     &second_target_metrics,
                 )
                 .map_err(RunnerError::MetricEvaluatorError)?;
-            evaluations.append(&mut es);
+                evaluation_results.append(&mut es);
         }
 
-        let complete_evaluation = CompleteEvaluation::from(evaluations);
+        let complete_evaluation = EvaluationSummary::from(evaluation_results);
 
         Ok(complete_evaluation)
     }

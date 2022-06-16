@@ -25,7 +25,7 @@ use poem::{
     Route, Server,
 };
 use poem_openapi::{payload::Json, OpenApi, OpenApiService};
-use public_types::{CompleteEvaluation, NodeUrl};
+use public_types::{EvaluationSummary, NodeUrl};
 use reqwest::Client as ReqwestClient;
 use runner::{BlockingRunner, BlockingRunnerArgs, Runner};
 use std::{collections::HashSet, hash::Hash, path::PathBuf, sync::Arc};
@@ -49,7 +49,7 @@ struct Api<M: MetricCollector, R: Runner> {
 #[OpenApi]
 impl<M: MetricCollector, R: Runner> Api<M, R> {
     #[oai(path = "/check_node", method = "get")]
-    async fn check_node(&self, target_node: Json<NodeUrl>) -> PoemResult<Json<CompleteEvaluation>> {
+    async fn check_node(&self, target_node: Json<NodeUrl>) -> PoemResult<Json<EvaluationSummary>> {
         if self.allow_preconfigured_test_node_only {
             return Err(PoemError::from((
                 StatusCode::METHOD_NOT_ALLOWED,
@@ -78,7 +78,7 @@ impl<M: MetricCollector, R: Runner> Api<M, R> {
     }
 
     #[oai(path = "/check_preconfigured_node", method = "get")]
-    async fn check_preconfigured_node(&self) -> PoemResult<Json<CompleteEvaluation>> {
+    async fn check_preconfigured_node(&self) -> PoemResult<Json<EvaluationSummary>> {
         if self.target_metric_collector.is_none() {
             return Err(PoemError::from((
                 StatusCode::METHOD_NOT_ALLOWED,
