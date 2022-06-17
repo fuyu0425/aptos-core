@@ -75,17 +75,17 @@ spec:
           WORKSPACE=/tmp
 
           # generate all validator configurations
-          {{- range $user := .Values.genesis.users }}
+          {{ range $user := .Values.genesis.users }}
           user_dir="${WORKSPACE}/{{ $user.name }}"
           mkdir $user_dir
           aptos genesis generate-keys --output-dir $user_dir
           aptos genesis set-validator-configuration --keys-dir $user_dir --local-repository-dir ${WORKSPACE} \
-          --username {{ $user.name }} \
+            --username {{ $user.name }} \
           {{- if $user.fullnode_host }}
-          --full-node-host {{ $user.fullnode_host }}:6182
+            --full-node-host {{ $user.fullnode_host }}:6182
           {{- end }}
-          --validator-host {{ $user.validator_host }}:6180 \
-          {{- end }}
+            --validator-host {{ $user.validator_host }}:6180 \
+          {{ end }}
 
           # get the framework
           # this is the directory the aptos-framework is located in the aptoslabs/init docker image
@@ -98,14 +98,14 @@ spec:
           # TODO(rustielin): delete old genesis artifacts
 
           # create genesis for validators to startup
-          {{- range $user := .Values.genesis.users }}
+          {{ range $user := .Values.genesis.users }}
           user_dir="${WORKSPACE}/{{ $user.name }}"
           kubectl create secret generic {{ $user.name }}-genesis-e{{ $.Values.chain.era }} \
-          --from-file=genesis.blob=${WORKSPACE}/genesis.blob \
-          --from-file=waypoint.txt=${WORKSPACE}/waypoint.txt \
-          --from-file=validator-identity.yaml=${user_dir}/validator-identity.yaml \
-          --from-file=validator-full-node-identity.yaml=${user_dir}/validator-full-node-identity.yaml
-          {{- end  }}
+            --from-file=genesis.blob=${WORKSPACE}/genesis.blob \
+            --from-file=waypoint.txt=${WORKSPACE}/waypoint.txt \
+            --from-file=validator-identity.yaml=${user_dir}/validator-identity.yaml \
+            --from-file=validator-full-node-identity.yaml=${user_dir}/validator-full-node-identity.yaml
+          {{ end  }}
           tail -f /dev/null
         resources:
           {{- toYaml .Values.genesis.resources | nindent 10 }}
