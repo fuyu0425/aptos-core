@@ -12,6 +12,7 @@ use crate::{
         ordering_state_computer::OrderingStateComputer,
     },
     liveness::{
+        cached_proposer_election::CachedProposerElection,
         leader_reputation::{ActiveInactiveHeuristic, AptosDBBackend, LeaderReputation},
         proposal_generator::ProposalGenerator,
         proposer_election::ProposerElection,
@@ -203,13 +204,15 @@ impl EpochManager {
                     heuristic_config.active_weights,
                     heuristic_config.inactive_weights,
                 ));
-                Box::new(LeaderReputation::new(
+                let pe = Box::new(LeaderReputation::new(
                     epoch_state.epoch,
                     proposers,
                     backend,
                     heuristic,
                     onchain_config.leader_reputation_exclude_round(),
-                ))
+                ));
+                // LeaderReputation is not cheap, so we can cache the amount of rounds round_manager needs.
+                Box::new(CachedProposerElection::new(pe, 3))
             }
             ConsensusProposerType::RoundProposer(round_proposers) => {
                 // Hardcoded to the first proposer
