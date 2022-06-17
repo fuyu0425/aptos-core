@@ -9,9 +9,9 @@ class SettingsController < ApplicationController
 
   layout 'settings'
 
-  def profile
-    return unless request.method_symbol == :post
+  def profile; end
 
+  def profile_update
     user_params = params.fetch(:user, {}).permit(:username, :email)
     if @user.update(user_params)
       notice = if @user.pending_reconfirmation?
@@ -30,8 +30,13 @@ class SettingsController < ApplicationController
     @authorizations = @user.authorizations.to_h do |authorization|
       [authorization.provider, authorization]
     end
+  end
 
-    return unless request.method_symbol == :post
+  def connections_update
+    store_location_for(current_user, request.path)
+    @authorizations = @user.authorizations.to_h do |authorization|
+      [authorization.provider, authorization]
+    end
 
     provider = params.fetch(:authorization, {}).require(:provider)
     authorization = @authorizations[provider]

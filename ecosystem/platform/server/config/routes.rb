@@ -18,13 +18,12 @@ Rails.application.routes.draw do
     root to: redirect('/it1') # creates user_root_path, where users go after confirming email
   end
 
-  namespace :settings do
-    root to: redirect('/settings/profile')
-    get 'profile'
-    patch 'profile'
-    get 'connections'
-    patch 'connections'
-  end
+  # Settings
+  get 'settings', to: redirect('/settings/profile')
+  get 'settings/profile'
+  patch 'settings/profile', to: 'settings#profile_update'
+  get 'settings/connections'
+  patch 'settings/connections', to: 'settings#connections_update'
 
   # KYC routes
   get 'onboarding/kyc_redirect', to: 'onboarding#kyc_redirect'
