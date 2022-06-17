@@ -41,7 +41,7 @@ fn root() -> String {
 struct Api<M: MetricCollector, R: Runner> {
     pub runner: R,
     pub target_metric_collector: Option<M>,
-    pub allow_preconfigured_test_node_only: bool,
+    pub allow_preconfigured_node_only: bool,
 }
 
 // I choose to keep both methods rather than making these two separate APIs because it'll
@@ -50,7 +50,7 @@ struct Api<M: MetricCollector, R: Runner> {
 impl<M: MetricCollector, R: Runner> Api<M, R> {
     #[oai(path = "/check_node", method = "get")]
     async fn check_node(&self, target_node: Json<NodeUrl>) -> PoemResult<Json<EvaluationSummary>> {
-        if self.allow_preconfigured_test_node_only {
+        if self.allow_preconfigured_node_only {
             return Err(PoemError::from((
                 StatusCode::METHOD_NOT_ALLOWED,
                 anyhow!(
@@ -106,14 +106,6 @@ impl<M: MetricCollector, R: Runner> Api<M, R> {
 async fn main() -> Result<()> {
     let args = Args::parse();
 
-    if args.debug {
-        env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("debug")).init();
-        debug!("Logging at debug level");
-    } else {
-        env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
-        info!("Logging at info level");
-    }
-
     let version = std::env::var("CARGO_PKG_VERSION").unwrap_or_else(|_| "0.1.0".to_string());
 
     let baseline_metric_collector =
@@ -138,7 +130,7 @@ async fn main() -> Result<()> {
     let api = Api {
         runner,
         target_metric_collector,
-        allow_preconfigured_test_node_only: args.allow_preconfigured_test_node_only,
+        allow_preconfigured_node_only: args.allow_preconfigured_node_only,
     };
 
     let api_service = OpenApiService::new(api, "Aptos Node Checker", version).server(format!(

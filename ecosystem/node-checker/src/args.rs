@@ -18,11 +18,6 @@ pub static DEFAULT_NOISE_PORT_STR: Lazy<String> = Lazy::new(|| format!("{}", DEF
 #[derive(Clone, Debug, Parser)]
 #[clap(author, version, about, long_about = None)]
 pub struct Args {
-    /// Whether to enable debug logging or not. This is a shortcut for the
-    /// standard env logger configuration via env vars
-    #[clap(short, long)]
-    pub debug: bool,
-
     /// What address to listen on.
     #[clap(long, default_value = "0.0.0.0")]
     pub listen_address: String,
@@ -71,7 +66,7 @@ pub struct Args {
 
     /// See the help message of target_node_url.
     #[clap(long)]
-    pub allow_preconfigured_test_node_only: bool,
+    pub allow_preconfigured_node_only: bool,
 
     #[clap(flatten)]
     pub blocking_runner_args: BlockingRunnerArgs,
