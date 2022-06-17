@@ -81,8 +81,10 @@ spec:
           aptos genesis generate-keys --output-dir $user_dir
           aptos genesis set-validator-configuration --keys-dir $user_dir --local-repository-dir ${WORKSPACE} \
           --username {{ $user.name }} \
-          --validator-host {{ $user.validator_host }}:6180 \
+          {{- if $user.fullnode_host }}
           --full-node-host {{ $user.fullnode_host }}:6182
+          {{- end }}
+          --validator-host {{ $user.validator_host }}:6180 \
           {{- end }}
 
           # get the framework

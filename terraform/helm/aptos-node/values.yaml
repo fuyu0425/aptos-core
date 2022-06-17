@@ -40,7 +40,6 @@ validator:
   exposeRestApi: false
 
 fullnode:
-  enabled: true
   groups:
   - name: fullnode
     replicas: 1
