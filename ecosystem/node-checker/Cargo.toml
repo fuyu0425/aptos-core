@@ -1,5 +1,5 @@
 [package]
-name = "aptos-node-health-checker"
+name = "aptos-node-checker"
 version = "0.1.0"
 description = "Aptos Node Health Checker"
 authors = ["Aptos Labs <opensource@aptoslabs.com>"]
@@ -32,4 +32,4 @@ aptos-rest-client = { path = "../../crates/aptos-rest-client" }
 aptos-workspace-hack = { path = "../../crates/aptos-workspace-hack" }
 
 [[bin]]
-name = "aptos-node-health-checker"
+name = "aptos-node-checker"
