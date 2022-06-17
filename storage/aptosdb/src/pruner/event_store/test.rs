@@ -129,11 +129,10 @@ fn verify_event_store_pruner_disabled(events: Vec<Vec<ContractEvent>>) {
             )
             .unwrap();
         // ensure that all events up to i * 2 are valid in DB
-        println!("I am here2 verify_event_store_pruner_disabled");
-        for j in 0..num_versions {
-            verify_events_in_store(&events, j as u64, event_store);
-            verify_event_by_key_in_store(&events, j as u64, event_store);
-            verify_event_by_version_in_store(&events, j as u64, event_store);
+        for version in 0..num_versions {
+            verify_events_in_store(&events, version as u64, event_store);
+            verify_event_by_key_in_store(&events, version as u64, event_store);
+            verify_event_by_version_in_store(&events, version as u64, event_store);
         }
     }
 }

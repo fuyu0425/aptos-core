@@ -54,7 +54,10 @@ pub(crate) struct Pruner {
     #[allow(dead_code)]
     min_readable_version: Arc<Mutex<Vec<Version>>>,
     /// We send a batch of version to the underlying pruners for performance reason. This tracks the
-    /// last version we sent to the pruners. If both of the pruners are disabled (i.e. state_store_prune_window and  ledger_prune_window are None,) this value will be None. Otherwise, this value represents the last version we sent to either the state_store_pruner or the ledger_pruner or both.
+    /// last version we sent to the pruners. If both of the pruners are disabled
+    /// (i.e. state_store_prune_window and  ledger_prune_window are None,) this value will be None.
+    /// Otherwise, this value represents the last version we sent to either the state_store_pruner
+    /// or the ledger_pruner or both.
     last_version_sent_to_pruners: Option<Arc<Mutex<Version>>>,
     /// Ideal batch size of the versions to be sent to the pruner
     pruning_batch_size: usize,
@@ -154,18 +157,16 @@ impl Pruner {
 
     fn wake_pruner(&self, latest_version: Version) {
         let mut prune_window_vector = Vec::new();
-        if self.state_store_prune_window.is_some() {
+        if let Some(state_store_prune_window) = self.state_store_prune_window {
             prune_window_vector.push(Some(
-                latest_version.saturating_sub(self.state_store_prune_window.unwrap()),
+                latest_version.saturating_sub(state_store_prune_window),
             ));
         } else {
             prune_window_vector.push(None);
         }
 
-        if self.ledger_prune_window.is_some() {
-            prune_window_vector.push(Some(
-                latest_version.saturating_sub(self.ledger_prune_window.unwrap()),
-            ));
+        if let Some(ledger_prune_window) = self.ledger_prune_window {
+            prune_window_vector.push(Some(latest_version.saturating_sub(ledger_prune_window)));
         } else {
             prune_window_vector.push(None);
         }

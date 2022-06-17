@@ -1207,51 +1207,23 @@ impl DbReader for AptosDB {
     }
 
     fn get_state_prune_window(&self) -> Result<Option<usize>> {
-        if self.pruner.is_some() {
-            gauged_api("get_state_prune_window", || {
-                Ok(
-                    if self
-                        .pruner
-                        .as_ref()
-                        .unwrap()
-                        .get_state_store_pruner_window()
-                        .is_none()
-                    {
-                        None
-                    } else {
-                        self.pruner
-                            .as_ref()
-                            .map(|x| x.get_state_store_pruner_window().unwrap() as usize)
-                    },
-                )
-            })
-        } else {
-            gauged_api("get_state_prune_window", || Ok(None))
+        let mut pruner_window = None;
+        if let Some(pruner) = self.pruner.as_ref() {
+            if let Some(window) = pruner.get_state_store_pruner_window() {
+                pruner_window = Some(window as usize);
+            }
         }
+        gauged_api("get_state_prune_window", || Ok(pruner_window))
     }
 
     fn get_ledger_prune_window(&self) -> Result<Option<usize>> {
-        if self.pruner.is_some() {
-            gauged_api("get_ledger_prune_window", || {
-                Ok(
-                    if self
-                        .pruner
-                        .as_ref()
-                        .unwrap()
-                        .get_ledger_pruner_window()
-                        .is_none()
-                    {
-                        None
-                    } else {
-                        self.pruner
-                            .as_ref()
-                            .map(|x| x.get_ledger_pruner_window().unwrap() as usize)
-                    },
-                )
-            })
-        } else {
-            gauged_api("get_ledger_prune_window", || Ok(None))
+        let mut pruner_window = None;
+        if let Some(pruner) = self.pruner.as_ref() {
+            if let Some(window) = pruner.get_ledger_pruner_window() {
+                pruner_window = Some(window as usize);
+            }
         }
+        gauged_api("get_ledger_prune_window", || Ok(pruner_window))
     }
 }
 
