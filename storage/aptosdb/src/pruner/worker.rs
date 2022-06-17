@@ -122,7 +122,9 @@ impl Worker {
                             // channel has drained.
                             self.blocking_recv = false;
                         }
-                        pruner.lock().set_target_version(new_target_version.unwrap());
+                        pruner
+                            .lock()
+                            .set_target_version(new_target_version.unwrap());
                     }
                 }
             }
@@ -132,5 +134,7 @@ impl Worker {
 
 pub enum Command {
     Quit,
-    Prune { target_db_versions: Vec<Option<Version>> },
+    Prune {
+        target_db_versions: Vec<Option<Version>>,
+    },
 }

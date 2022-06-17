@@ -155,15 +155,17 @@ impl Pruner {
     fn wake_pruner(&self, latest_version: Version) {
         let mut prune_window_vector = Vec::new();
         if self.state_store_prune_window.is_some() {
-            prune_window_vector
-                .push(Some(latest_version.saturating_sub(self.state_store_prune_window.unwrap())));
+            prune_window_vector.push(Some(
+                latest_version.saturating_sub(self.state_store_prune_window.unwrap()),
+            ));
         } else {
             prune_window_vector.push(None);
         }
 
         if self.ledger_prune_window.is_some() {
-            prune_window_vector
-                .push(Some(latest_version.saturating_sub(self.ledger_prune_window.unwrap())));
+            prune_window_vector.push(Some(
+                latest_version.saturating_sub(self.ledger_prune_window.unwrap()),
+            ));
         } else {
             prune_window_vector.push(None);
         }

@@ -135,6 +135,83 @@ fn test_state_store_pruner() {
 }
 
 #[test]
+fn test_state_store_pruner_disabled() {
+    let key = StateKey::Raw(String::from("test_key1").into_bytes());
+
+    let prune_batch_size = 10;
+    let num_versions = 25;
+    let tmp_dir = TempPath::new();
+    let aptos_db = AptosDB::new_for_test(&tmp_dir);
+    let state_store = &StateStore::new(
+        Arc::clone(&aptos_db.ledger_db),
+        Arc::clone(&aptos_db.state_merkle_db),
+    );
+    let pruner = Pruner::new(
+        Arc::clone(&aptos_db.ledger_db),
+        Arc::clone(&aptos_db.state_merkle_db),
+        StoragePrunerConfig {
+            state_store_prune_window: None,
+            ledger_prune_window: Some(0),
+            pruning_batch_size: prune_batch_size,
+        },
+    );
+
+    let mut root_hashes = vec![];
+    // Insert 25 values in the db.
+    for i in 0..num_versions {
+        let value = StateValue::from(vec![i as u8]);
+        root_hashes.push(put_value_set(
+            &aptos_db.ledger_db,
+            state_store,
+            vec![(key.clone(), value.clone())],
+            i as u64, /* version */
+        ));
+    }
+
+    // Prune till version=0. This should basically be a no-op
+    {
+        pruner
+            .wait_and_ensure_disabled(
+                0, /* latest_version */
+                PrunerIndex::StateStorePrunerIndex as usize,
+            )
+            .unwrap();
+        for i in 0..num_versions {
+            verify_state_in_store(
+                state_store,
+                key.clone(),
+                Some(&StateValue::from(vec![i as u8])),
+                i,
+            );
+        }
+    }
+
+    // Notify the pruner to update the version to be 10 - since we use a batch size of 10,
+    // we expect versions 0 to 9 to be pruned.
+    {
+        pruner
+            .wait_and_ensure_disabled(
+                prune_batch_size as u64, /* latest_version */
+                PrunerIndex::StateStorePrunerIndex as usize,
+            )
+            .unwrap();
+        for i in 0..prune_batch_size {
+            assert!(state_store
+                .get_value_with_proof_by_version(&key, i as u64)
+                .is_ok());
+        }
+        for i in 0..num_versions as usize {
+            verify_state_in_store(
+                state_store,
+                key.clone(),
+                Some(&StateValue::from(vec![i as u8])),
+                i as u64,
+            );
+        }
+    }
+}
+
+#[test]
 fn test_worker_quit_eagerly() {
     let key = StateKey::Raw(String::from("test_key1").into_bytes());
 
