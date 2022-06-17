@@ -74,6 +74,7 @@ fn test_nil_block() {
         aptos_infallible::duration_since_epoch().as_micros() as u64,
         nil_block_qc,
         &signer,
+        Vec::new(),
     );
     assert_eq!(nil_block_child.is_nil_block(), false);
     assert_eq!(nil_block_child.round(), 2);
@@ -93,6 +94,7 @@ fn test_block_relation() {
         aptos_infallible::duration_since_epoch().as_micros() as u64,
         quorum_cert,
         &signer,
+        Vec::new(),
     );
     assert_eq!(next_block.round(), 1);
     assert_eq!(genesis_block.is_parent_of(&next_block), true);
@@ -121,6 +123,7 @@ fn test_same_qc_different_authors() {
         current_timestamp,
         genesis_qc.clone(),
         &signer,
+        Vec::new(),
     );
 
     let signature = signer.sign(genesis_qc.ledger_info().ledger_info());
@@ -134,10 +137,17 @@ fn test_same_qc_different_authors() {
         current_timestamp,
         genesis_qc_altered,
         &signer,
+        Vec::new(),
     );
 
-    let block_round_1_same =
-        Block::new_proposal(payload, round, current_timestamp, genesis_qc, &signer);
+    let block_round_1_same = Block::new_proposal(
+        payload,
+        round,
+        current_timestamp,
+        genesis_qc,
+        &signer,
+        Vec::new(),
+    );
 
     assert!(block_round_1.id() != block_round_1_altered.id());
     assert_eq!(block_round_1.id(), block_round_1_same.id());
@@ -166,6 +176,7 @@ fn test_block_metadata_bitmaps() {
         start_timestamp,
         genesis_qc,
         &signers[0],
+        Vec::new(),
     );
     let block_metadata_1 = block_1.new_block_metadata(&validators);
     assert_eq!(signers[0].author(), block_metadata_1.proposer());
@@ -201,6 +212,7 @@ fn test_block_metadata_bitmaps() {
         start_timestamp + 1,
         qc_1,
         &signers[1],
+        Vec::new(),
     );
     let block_metadata_2 = block_2.new_block_metadata(&validators);
     assert_eq!(signers[1].author(), block_metadata_2.proposer());

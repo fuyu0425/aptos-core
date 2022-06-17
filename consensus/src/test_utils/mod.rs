@@ -167,7 +167,14 @@ impl TreeInserter {
         round: Round,
         payload: Payload,
     ) -> Block {
-        Block::new_proposal(payload, round, timestamp_usecs, parent_qc, &self.signer)
+        Block::new_proposal(
+            payload,
+            round,
+            timestamp_usecs,
+            parent_qc,
+            &self.signer,
+            Vec::new(),
+        )
     }
 }
 

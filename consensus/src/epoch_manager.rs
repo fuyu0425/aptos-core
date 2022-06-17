@@ -68,6 +68,9 @@ use std::{
     time::Duration,
 };
 
+// TODO: move to configuration.
+const MAX_FAILED_AUTHORS_TO_STORE: Round = 10;
+
 #[allow(clippy::large_enum_variant)]
 pub enum LivenessStorageData {
     RecoveryData(RecoveryData),
@@ -212,7 +215,10 @@ impl EpochManager {
                     onchain_config.leader_reputation_exclude_round(),
                 ));
                 // LeaderReputation is not cheap, so we can cache the amount of rounds round_manager needs.
-                Box::new(CachedProposerElection::new(pe, 3))
+                Box::new(CachedProposerElection::new(
+                    pe,
+                    MAX_FAILED_AUTHORS_TO_STORE + 3,
+                ))
             }
             ConsensusProposerType::RoundProposer(round_proposers) => {
                 // Hardcoded to the first proposer
@@ -483,6 +489,7 @@ impl EpochManager {
             Arc::new(payload_manager),
             self.time_service.clone(),
             self.config.max_block_size,
+            MAX_FAILED_AUTHORS_TO_STORE,
         );
 
         let mut round_manager = RoundManager::new(

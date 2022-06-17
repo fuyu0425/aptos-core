@@ -257,9 +257,10 @@ impl RoundManager {
                 .await;
         }
         .boxed();
+
         let proposal = self
             .proposal_generator
-            .generate_proposal(new_round_event.round, callback)
+            .generate_proposal(new_round_event.round, &mut self.proposer_election, callback)
             .await?;
         let signature = self.safety_rules.lock().sign_proposal(&proposal)?;
         let signed_proposal =
