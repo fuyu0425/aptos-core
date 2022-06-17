@@ -734,7 +734,7 @@ impl DbReader for AptosDB {
             let version = ledger_info_with_sigs.ledger_info().version();
             let (blob, _proof) = self
                 .state_store
-                .get_value_with_proof_by_version(&state_key, version)?;
+                .get_state_value_with_proof_by_version(&state_key, version)?;
             Ok(blob)
         })
     }
@@ -1068,7 +1068,7 @@ impl DbReader for AptosDB {
             )?;
 
             self.state_store
-                .get_value_by_version(state_store_key, version)
+                .get_state_value_by_version(state_store_key, version)
         })
     }
 
@@ -1110,7 +1110,7 @@ impl DbReader for AptosDB {
             )?;
 
             self.state_store
-                .get_value_with_proof_by_version(state_store_key, version)
+                .get_state_value_with_proof_by_version(state_store_key, version)
         })
     }
 
@@ -1162,12 +1162,12 @@ impl DbReader for AptosDB {
         })
     }
 
-    fn get_state_checkpoint_before(
+    fn get_state_snapshot_before(
         &self,
         next_version: Version,
     ) -> Result<Option<(Version, HashValue)>> {
         gauged_api("get_state_checkpoint_before", || {
-            self.state_store.get_checkpoint_before(next_version)
+            self.state_store.get_state_snapshot_before(next_version)
         })
     }
 
@@ -1207,23 +1207,27 @@ impl DbReader for AptosDB {
     }
 
     fn get_state_prune_window(&self) -> Result<Option<usize>> {
-        let mut pruner_window = None;
-        if let Some(pruner) = self.pruner.as_ref() {
-            if let Some(window) = pruner.get_state_store_pruner_window() {
-                pruner_window = Some(window as usize);
+        gauged_api("get_state_prune_window", || {
+            let mut pruner_window = None;
+            if let Some(pruner) = self.pruner.as_ref() {
+                if let Some(window) = pruner.get_state_store_pruner_window() {
+                    pruner_window = Some(window as usize);
+                }
             }
-        }
-        gauged_api("get_state_prune_window", || Ok(pruner_window))
+            Ok(pruner_window)
+        })
     }
 
     fn get_ledger_prune_window(&self) -> Result<Option<usize>> {
-        let mut pruner_window = None;
-        if let Some(pruner) = self.pruner.as_ref() {
-            if let Some(window) = pruner.get_ledger_pruner_window() {
-                pruner_window = Some(window as usize);
+        gauged_api("get_ledger_prune_window", || {
+            let mut pruner_window = None;
+            if let Some(pruner) = self.pruner.as_ref() {
+                if let Some(window) = pruner.get_ledger_pruner_window() {
+                    pruner_window = Some(window as usize);
+                }
             }
-        }
-        gauged_api("get_ledger_prune_window", || Ok(pruner_window))
+            Ok(pruner_window)
+        })
     }
 }
 
