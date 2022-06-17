@@ -7,12 +7,24 @@ metadata:
 data:
   layout.yaml: |-
     ---
-    root_key: '0x5243ca72b0766d9e9cbf2debf6153443b01a1e0e6d086c7ea206eaf6f8043956'
+    root_key: {{ .Values.chain.root_key | squote }}
     users:
-    {{- range $user := .Values.genesis.users }}
-    - {{ $user.name | squote }}
+    {{- range $i, $e := until (int .Values.genesis.numValidators) }}
+    - {{ printf "%s-%d" $.Values.genesis.username_prefix $i | squote }}
     {{- end }}
     chain_id: {{ .Values.chain.chain_id | int }}
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "aptos-genesis.fullname" . }}-script
+  labels:
+    {{- include "aptos-genesis.labels" . | nindent 4 }}
+data:
+  genesis.sh: |-
+{{ .Files.Get "files/genesis.sh" | indent 4 }}
 
 ---
 
@@ -72,52 +84,21 @@ spec:
         - -c
         - |-
           set -ex
-          WORKSPACE=/tmp
-
-          # generate all validator configurations
-          {{ range $user := .Values.genesis.users }}
-          user_dir="${WORKSPACE}/{{ $user.name }}"
-          mkdir $user_dir
-          aptos genesis generate-keys --output-dir $user_dir
-          aptos genesis set-validator-configuration --keys-dir $user_dir --local-repository-dir ${WORKSPACE} \
-            --username {{ $user.name }} \
-          {{- if $user.fullnode_host }}
-            --full-node-host {{ $user.fullnode_host }}:6182
-          {{- end }}
-            --validator-host {{ $user.validator_host }}:6180 \
-          {{ end }}
-
-          # get the framework
-          # this is the directory the aptos-framework is located in the aptoslabs/init docker image
-          FRAMEWORK_DIR="/aptos-framework/move/modules"
-          cp -R $FRAMEWORK_DIR ${WORKSPACE}/framework
-
-          # run genesis
-          aptos genesis generate-genesis --local-repository-dir ${WORKSPACE} --output-dir ${WORKSPACE}
-
-          # TODO(rustielin): delete old genesis artifacts
-
-          # create genesis for validators to startup
-          {{ range $user := .Values.genesis.users }}
-          user_dir="${WORKSPACE}/{{ $user.name }}"
-          kubectl create secret generic {{ $user.name }}-genesis-e{{ $.Values.chain.era }} \
-            --from-file=genesis.blob=${WORKSPACE}/genesis.blob \
-            --from-file=waypoint.txt=${WORKSPACE}/waypoint.txt \
-            --from-file=validator-identity.yaml=${user_dir}/validator-identity.yaml \
-            --from-file=validator-full-node-identity.yaml=${user_dir}/validator-full-node-identity.yaml
-          {{ end  }}
-          tail -f /dev/null
+          source genesis.sh
         resources:
           {{- toYaml .Values.genesis.resources | nindent 10 }}
         env:
         - name: RUST_BACKTRACE
           value: "1"
+        - name: NUM_VALIDATORS
+          value: {{ .Values.numValidators }}
         volumeMounts:
         - name: layout
           mountPath: /tmp/layout.yaml
           subPath: layout.yaml
-        - name: genesis-workspace
-          mountPath: /genesis
+        - name: script
+          mountPath: /tmp/genesis.sh
+          subPath: genesis.sh
         - name: tmp
           mountPath: /tmp
         securityContext:
@@ -149,8 +130,9 @@ spec:
       - name: layout
         configMap:
           name: {{ include "aptos-genesis.fullname" . }}-layout-e{{ .Values.chain.era }}
-      - name: genesis-workspace
-        emptyDir: {}
+      - name: script
+        configMap:
+          name: {{ include "aptos-genesis.fullname" . }}-script
       - name: tmp
         emptyDir: {}
       serviceAccountName: {{ include "aptos-genesis.serviceAccountName" . }}

@@ -5,8 +5,10 @@ chain:
 
 imageTag: testnet
 
+# Number of validators to deploy
+numValidators: 1
+
 validator:
-  enabled: false
   name:
   image:
     repo: aptoslabs/validator
@@ -102,6 +104,3 @@ serviceAccount:
 
 # Load test-data for starting a test network
 loadTestGenesis: false
-
-# Number of validators to deploy
-numValidators: 1
