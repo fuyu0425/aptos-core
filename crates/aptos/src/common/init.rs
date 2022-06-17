@@ -1,15 +1,13 @@
 // Copyright (c) Aptos
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    common::{
-        types::{
-            account_address_from_public_key, CliCommand, CliConfig, CliError, CliTypedResult,
-            EncodingOptions, PrivateKeyInputOptions, ProfileConfig, ProfileOptions, PromptOptions,
-        },
-        utils::{fund_account, prompt_yes_with_override, read_line},
+use crate::common::{
+    types::{
+        account_address_from_public_key, CliCommand, CliConfig, CliError, CliTypedResult,
+        EncodingOptions, PrivateKeyInputOptions, ProfileConfig, ProfileOptions, PromptOptions,
+        RngArgs,
     },
-    op::key::GenerateKey,
+    utils::{fund_account, prompt_yes_with_override, read_line},
 };
 use aptos_crypto::{ed25519::Ed25519PrivateKey, PrivateKey, ValidCryptoMaterialStringExt};
 use async_trait::async_trait;
@@ -32,6 +30,8 @@ pub struct InitTool {
     /// URL for the Faucet endpoint
     #[clap(long)]
     pub faucet_url: Option<Url>,
+    #[clap(flatten)]
+    pub rng_args: RngArgs,
     #[clap(flatten)]
     pub(crate) private_key_options: PrivateKeyInputOptions,
     #[clap(flatten)]
@@ -136,7 +136,9 @@ impl CliCommand<()> for InitTool {
                     private_key
                 } else {
                     eprintln!("No key given, generating key...");
-                    GenerateKey::generate_ed25519_in_memory()
+                    self.rng_args
+                        .key_generator()?
+                        .generate_ed25519_private_key()
                 }
             } else {
                 Ed25519PrivateKey::from_encoded_string(input)

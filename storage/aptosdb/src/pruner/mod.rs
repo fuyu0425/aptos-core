@@ -55,7 +55,7 @@ pub(crate) struct Pruner {
     min_readable_version: Arc<Mutex<Vec<Version>>>,
     /// We send a batch of version to the underlying pruners for performance reason. This tracks the
     /// last version we sent to the pruners. If both of the pruners are disabled
-    /// (i.e. state_store_prune_window and  ledger_prune_window are None,) this value will be None.
+    /// (i.e. state_store_prune_window and ledger_prune_window are None,) this value will be None.
     /// Otherwise, this value represents the last version we sent to either the state_store_pruner
     /// or the ledger_pruner or both.
     last_version_sent_to_pruners: Option<Arc<Mutex<Version>>>,
