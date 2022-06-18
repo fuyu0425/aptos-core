@@ -6,7 +6,6 @@ chain:
 
 imageTag: testnet
 
-
 genesis:
   image:
     repo: aptoslabs/init
@@ -19,7 +18,6 @@ genesis:
   username_prefix: aptos-node
   validator_host_suffix: validator-lb
   fullnode_host_suffix: fullnode-lb
-
 
 serviceAccount:
   # Specifies whether a service account should be created

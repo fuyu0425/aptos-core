@@ -84,14 +84,20 @@ spec:
         - -c
         - |-
           set -ex
-          source genesis.sh
+          . /tmp/genesis.sh
         resources:
           {{- toYaml .Values.genesis.resources | nindent 10 }}
         env:
         - name: RUST_BACKTRACE
           value: "1"
         - name: NUM_VALIDATORS
-          value: {{ .Values.numValidators }}
+          value: {{ .Values.genesis.numValidators | quote }}
+        - name: WORKSPACE
+          value: /tmp
+        - name: USERNAME_PREFIX
+          value: {{ .Values.genesis.username_prefix | quote }}
+        - name: ERA
+          value: {{ .Values.chain.era | quote }}
         volumeMounts:
         - name: layout
           mountPath: /tmp/layout.yaml
